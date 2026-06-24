@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(mysql -u root -p'your_mysql_password' -e \"SELECT * FROM mysql.general_log LIMIT 1;\")",
-      "Read(//Users/yqjunstin/.Trash//**)",
-      "Bash(tmutil listbackups *)"
-    ]
-  }
-}
