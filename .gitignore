@@ -35,6 +35,7 @@ build/
 ### Sensitive ###
 application.properties
 .env
+.claude/
 
 ### macOS ###
 *.DS_Store
