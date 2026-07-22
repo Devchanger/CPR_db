@@ -84,6 +84,8 @@ public class ScoreService {
                     .limit(5)
                     .map(this::toDto)
                     .collect(Collectors.toList()));
+        } else {
+            stats.setRecentScores(List.of());
         }
 
         return stats;
