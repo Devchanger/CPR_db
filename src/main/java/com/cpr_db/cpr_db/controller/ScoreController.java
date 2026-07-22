@@ -2,6 +2,7 @@ package com.cpr_db.cpr_db.controller;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
 import com.cpr_db.cpr_db.dto.ScoreDto;
+import com.cpr_db.cpr_db.dto.ScoreStatsResponse;
 import com.cpr_db.cpr_db.dto.ScoreSubmitRequest;
 import com.cpr_db.cpr_db.entity.User;
 import com.cpr_db.cpr_db.repository.UserRepository;
@@ -60,5 +61,12 @@ public class ScoreController {
         }
         ScoreDto latest = scoreService.getLatestScore(currentUsername);
         return ResponseEntity.ok(ApiResponse.success(latest));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<ScoreStatsResponse>> getStats(Authentication authentication) {
+        String username = authentication.getName();
+        ScoreStatsResponse stats = scoreService.getStats(username);
+        return ResponseEntity.ok(ApiResponse.success(stats));
     }
 }
