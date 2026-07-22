@@ -1,66 +1,21 @@
-package com.cpr_db.cpr_db.entity;
+package com.cpr_db.cpr_db.dto;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "users", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "username"),
-        @UniqueConstraint(columnNames = "phone"),
-        @UniqueConstraint(columnNames = "student_id")
-})
-public class User {
+public class ProfileResponse {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false, unique = true, length = 50)
     private String username;
-
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
-
-    @Column(name = "real_name", length = 50)
     private String realName;
-
-    @Column(length = 20)
     private String role;
-
-    @Column(length = 500)
     private String avatar;
-
-    @Column
     private Integer gender;
-
-    @Column(length = 20)
     private String phone;
-
-    @Column(name = "student_id", length = 50)
     private String studentId;
-
-    @Column(name = "class_name", length = 100)
     private String className;
-
-    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public User() {
-    }
-
-    public User(String username, String passwordHash) {
-        this.username = username;
-        this.passwordHash = passwordHash;
-    }
-
-    @PrePersist
-    public void prePersist() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-        if (role == null) {
-            role = "student";
-        }
+    public ProfileResponse() {
     }
 
     public Long getId() { return id; }
@@ -68,9 +23,6 @@ public class User {
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
-
-    public String getPasswordHash() { return passwordHash; }
-    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
     public String getRealName() { return realName; }
     public void setRealName(String realName) { this.realName = realName; }
