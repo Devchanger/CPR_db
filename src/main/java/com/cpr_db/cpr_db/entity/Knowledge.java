@@ -1,5 +1,6 @@
 package com.cpr_db.cpr_db.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -11,12 +12,14 @@ public class Knowledge {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 200)
-    private String title;
+    @Column(name = "title", nullable = false, length = 200)
+    @JsonProperty("question")
+    private String question;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
+    @JsonProperty("answer")
+    private String answer;
 
     @Column(length = 50)
     private String category;
@@ -45,20 +48,20 @@ public class Knowledge {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getQuestion() {
+        return question;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setQuestion(String question) {
+        this.question = question;
     }
 
-    public String getContent() {
-        return content;
+    public String getAnswer() {
+        return answer;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setAnswer(String answer) {
+        this.answer = answer;
     }
 
     public String getCategory() {
