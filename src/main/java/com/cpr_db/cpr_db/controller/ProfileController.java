@@ -27,6 +27,7 @@ public class ProfileController {
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
     private static final long MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+    private static final Path AVATAR_DIR = Paths.get("/opt/cpr-db/uploads/avatars");
 
     public ProfileController(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -80,7 +81,7 @@ public class ProfileController {
     @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Map<String, String>>> uploadAvatar(
             Authentication authentication,
-            @RequestParam("file") MultipartFile file) throws IOException {
+            @RequestParam("file") MultipartFile file) {
 
         // 校验文件类型
         String originalName = file.getOriginalFilename();
@@ -99,13 +100,17 @@ public class ProfileController {
 
         User user = getCurrentUser(authentication);
 
-        // 保存到 uploads/avatars/ 目录
-        Path uploadsDir = Paths.get(System.getProperty("user.dir"), "uploads", "avatars");
-        Files.createDirectories(uploadsDir);
+        // 保存到绝对路径
+        String extFinal = ext;
+        String filename = user.getId() + "_" + System.currentTimeMillis() + "." + extFinal;
 
-        String filename = user.getId() + "_" + System.currentTimeMillis() + "." + ext;
-        Path filePath = uploadsDir.resolve(filename);
-        Files.write(filePath, file.getBytes());
+        try {
+            Files.createDirectories(AVATAR_DIR);
+            Path filePath = AVATAR_DIR.resolve(filename);
+            Files.write(filePath, file.getBytes());
+        } catch (IOException e) {
+            throw new BusinessException(500, "头像保存失败，请稍后重试");
+        }
 
         // 更新用户头像字段
         String avatarUrl = "/uploads/avatars/" + filename;
