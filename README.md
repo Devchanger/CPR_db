@@ -173,6 +173,159 @@ JPA `ddl-auto=update` 自动建表/加列，无需手动执行 DDL。
 
 > ℹ️ 生产环境请替换 `jwt.secret` 为强随机密钥，通过环境变量注入。
 
+## 测试
+
+### 测试规则
+
+| 规则 | 说明 |
+|------|------|
+| **Content-Type** | 所有 JSON 请求必须带 `Content-Type: application/json`，文件上传用 `multipart/form-data` |
+| **Token 前缀** | 鉴权请求 Header 格式为 `Authorization: Bearer <token>` |
+| **Token 有效期** | 24 小时，过期返回 401，需重新登录 |
+| **成绩隔离** | 用户只能查询自己的成绩，查他人返回 403 |
+| **个人信息隔离** | 只能查看/修改自己的 profile |
+| **手机号唯一** | 同一手机号不能被两个用户使用，更新时排除自身 |
+| **学号唯一** | 同学号规则同上 |
+| **头像限制** | 仅 jpg/png/webp，≤ 2MB |
+| **空数据** | `students` 无种子数据返回 `[]`；`stats` 无成绩时各字段为 0/空数组 |
+
+### 测试方法
+
+#### 1. 公开接口（无需 token）
+
+```bash
+BASE="http://123.57.30.132:8080"
+
+# 场景列表
+curl -s $BASE/api/v1/scenes | python3 -m json.tool
+
+# 知识库（全部 / 按分类）
+curl -s "$BASE/api/v1/knowledge" | python3 -m json.tool
+curl -s "$BASE/api/v1/knowledge?category=AED" | python3 -m json.tool
+
+# 预设问题
+curl -s $BASE/api/v1/qa/presets | python3 -m json.tool
+
+# 视频
+curl -s $BASE/api/v1/videos/video1 | python3 -m json.tool
+```
+
+#### 2. 登录获取 Token
+
+```bash
+# 登录
+TOKEN=$(curl -s -X POST $BASE/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","password":"Test@123456"}' \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['token'])")
+
+echo "Token: ${TOKEN:0:30}..."
+
+# 注册新用户
+curl -s -X POST $BASE/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"newuser","password":"Pass@123"}' | python3 -m json.tool
+```
+
+#### 3. 鉴权接口（需 Token）
+
+```bash
+AUTH="Authorization: Bearer $TOKEN"
+
+# 个人信息
+curl -s -H "$AUTH" $BASE/api/v1/profile | python3 -m json.tool
+
+# 更新个人信息
+curl -s -X PUT -H "Content-Type: application/json" -H "$AUTH" \
+  -d '{"realName":"张三","gender":1,"phone":"13800138000","className":"护理2班"}' \
+  $BASE/api/v1/profile | python3 -m json.tool
+
+# 用户速查
+curl -s -H "$AUTH" $BASE/api/v1/user/info | python3 -m json.tool
+
+# 学员列表
+curl -s -H "$AUTH" $BASE/api/v1/students | python3 -m json.tool
+
+# 提交成绩
+curl -s -X POST -H "Content-Type: application/json" -H "$AUTH" \
+  -d '{"scene":"成人CPR训练","skill":"胸外按压","totalScore":85.5}' \
+  $BASE/api/v1/scores | python3 -m json.tool
+
+# 成绩列表 / 最新 / 统计
+curl -s -H "$AUTH" $BASE/api/v1/scores | python3 -m json.tool
+curl -s -H "$AUTH" $BASE/api/v1/scores/latest | python3 -m json.tool
+curl -s -H "$AUTH" $BASE/api/v1/scores/stats | python3 -m json.tool
+
+# 智能问答
+curl -s -X POST -H "Content-Type: application/json" -H "$AUTH" \
+  -d '{"question":"CPR的按压频率是多少？"}' \
+  $BASE/api/v1/qa | python3 -m json.tool
+```
+
+#### 4. 文件上传
+
+```bash
+# 上传头像（有本地文件时）
+curl -X POST -H "$AUTH" \
+  -F "file=@/path/to/avatar.jpg" \
+  $BASE/api/v1/profile/avatar
+
+# 姿态识别
+curl -X POST -H "$AUTH" \
+  -F "image=@/path/to/pose.jpg" \
+  $BASE/api/v1/pose/detect
+```
+
+#### 5. 错误场景测试
+
+```bash
+# 缺 Content-Type → 415
+curl -s -X POST $BASE/api/v1/auth/login -d '{}'
+
+# 缺 Token → 401
+curl -s $BASE/api/v1/profile
+
+# Token 过期/无效 → 401
+curl -s -H "Authorization: Bearer invalid_token" $BASE/api/v1/profile
+
+# 查他人成绩 → 403
+curl -s -H "$AUTH" "$BASE/api/v1/scores?username=other_user"
+
+# 错误方法 → 405
+curl -s $BASE/api/v1/auth/login
+
+# 手机号冲突 → 409
+curl -s -X PUT -H "Content-Type: application/json" -H "$AUTH" \
+  -d '{"phone":"13800138000"}' $BASE/api/v1/profile
+```
+
+### 常见错误码
+
+| HTTP | code | message 示例 | 原因 | 解决方法 |
+|:----:|------|------|------|------|
+| 200 | 200 | success | 正常 | — |
+| 400 | 400 | username is required | 缺少必填参数 | 检查请求体字段名和值 |
+| 400 | 400 | 请求体缺失或格式错误 | 未传 body 或 JSON 格式错误 | 加 `Content-Type: application/json` 和正确 JSON |
+| 400 | 400 | username already exists | 用户名重复 | 换一个用户名注册 |
+| 400 | 400 | 不支持的文件格式 | 头像格式非 jpg/png/webp | 转换图片格式 |
+| 400 | 400 | 文件大小不能超过 2MB | 头像过大 | 压缩图片 |
+| 400 | 400 | 文件上传失败 | multipart 请求格式有误 | 确认表单字段名为 `file`，Content-Type 为 `multipart/form-data` |
+| 400 | 400 | invalid phone number format | 手机号格式不符 | 使用 11 位中国大陆手机号 |
+| 401 | 401 | Bad credentials | 用户名或密码错误 | 检查账号密码 |
+| 401 | 401 | Full authentication is required | 缺少 Token | 先登录获取 Token |
+| 401 | 401 | JWT expired / invalid | Token 过期或无效 | 重新登录 |
+| 403 | 403 | Access denied | 无权限 | 确认路由是否有权访问 |
+| 403 | 403 | only current user may query scores | 企图查他人成绩 | 去掉 `?username=` 参数 |
+| 404 | 404 | score not found | 尚无成绩记录 | 先提交一条成绩 |
+| 405 | 405 | 不支持的请求方法 | GET/POST 方法用错 | 检查 HTTP 方法 |
+| 409 | 409 | 手机号已被其他用户使用 | 手机号冲突 | 换一个手机号 |
+| 409 | 409 | 学号已被其他用户使用 | 学号冲突 | 换一个学号 |
+| 415 | 415 | 不支持的 Content-Type | Content-Type 错误 | 设为 `application/json` 或 `multipart/form-data` |
+| 500 | 500 | Internal server error | 未知服务器错误 | 查看 ECS 日志 `journalctl -u cpr-db -n 50` |
+| 500 | 500 | 头像保存失败 | 磁盘写入异常 | 检查 `/opt/cpr-db/uploads/` 权限 |
+
+> 提示：所有非 200 响应均包含 `"data": null`，前端可据此判断是否成功。
+
 ## 部署
 
 ECS 部署地址 `123.57.30.132:8080`，systemd 服务 `cpr-db.service`。
