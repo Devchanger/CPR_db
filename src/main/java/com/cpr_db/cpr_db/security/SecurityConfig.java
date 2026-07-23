@@ -50,7 +50,8 @@ public class SecurityConfig {
                                 "/api/v1/videos/**",
                                 "/api/v1/qa/presets",
                                 "/api/v1/scenes/**",
-                                "/api/v1/knowledge/**"
+                                "/api/v1/knowledge/**",
+                                "/uploads/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
