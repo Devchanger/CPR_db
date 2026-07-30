@@ -42,3 +42,11 @@ application.properties
 
 ### Project Docs ###
 conversation/
+<<<<<<< HEAD
+=======
+
+# ===== WorkBuddy / 工具产物 =====
+.workbuddy/
+logs/
+fix-report.md
+>>>>>>> 193e2be (feat: complete all missing backend API endpoints)

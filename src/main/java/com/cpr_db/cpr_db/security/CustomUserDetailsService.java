@@ -24,7 +24,14 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+<<<<<<< HEAD
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPasswordHash(), authorities);
+=======
+        String role = user.getRole() != null ? user.getRole() : "student";
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(), user.getPasswordHash(), authorities);
+>>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     }
 }

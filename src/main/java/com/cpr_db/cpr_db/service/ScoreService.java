@@ -6,10 +6,21 @@ import com.cpr_db.cpr_db.dto.ScoreStatsResponse;
 import com.cpr_db.cpr_db.dto.ScoreSubmitRequest;
 import com.cpr_db.cpr_db.entity.Score;
 import com.cpr_db.cpr_db.repository.ScoreRepository;
+<<<<<<< HEAD
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+=======
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+>>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 import java.util.stream.Collectors;
 
 @Service
@@ -91,6 +102,34 @@ public class ScoreService {
         return stats;
     }
 
+<<<<<<< HEAD
+=======
+    public Map<String, Object> getAllScores(int page, int pageSize) {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+        Page<Score> result = scoreRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page - 1, pageSize));
+        List<ScoreDto> list = result.getContent().stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+        Map<String, Object> map = new HashMap<>();
+        map.put("list", list);
+        map.put("total", result.getTotalElements());
+        return map;
+    }
+
+    public ScoreDto getScoreById(Long id) {
+        Score score = scoreRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(404, "score not found"));
+        return toDto(score);
+    }
+
+    public void deleteScore(Long id) {
+        Score score = scoreRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(404, "score not found"));
+        scoreRepository.delete(score);
+    }
+
+>>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     private ScoreDto toDto(Score score) {
         ScoreDto dto = new ScoreDto();
         dto.setId(score.getId());

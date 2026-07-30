@@ -1,0 +1,20 @@
+[Unit]
+Description=CPR DB Training Data Backend
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=cpr
+Group=cpr
+WorkingDirectory=/opt/cpr-db
+EnvironmentFile=/opt/cpr-db/.env
+ExecStart=/usr/bin/java -jar /opt/cpr-db/cpr_db-0.0.1-SNAPSHOT.jar
+SuccessExitStatus=143
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

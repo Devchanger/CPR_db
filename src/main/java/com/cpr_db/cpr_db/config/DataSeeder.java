@@ -2,11 +2,22 @@ package com.cpr_db.cpr_db.config;
 
 import com.cpr_db.cpr_db.entity.Knowledge;
 import com.cpr_db.cpr_db.entity.Scene;
+<<<<<<< HEAD
 import com.cpr_db.cpr_db.entity.Video;
 import com.cpr_db.cpr_db.repository.KnowledgeRepository;
 import com.cpr_db.cpr_db.repository.SceneRepository;
 import com.cpr_db.cpr_db.repository.VideoRepository;
 import org.springframework.boot.CommandLineRunner;
+=======
+import com.cpr_db.cpr_db.entity.User;
+import com.cpr_db.cpr_db.entity.Video;
+import com.cpr_db.cpr_db.repository.KnowledgeRepository;
+import com.cpr_db.cpr_db.repository.SceneRepository;
+import com.cpr_db.cpr_db.repository.UserRepository;
+import com.cpr_db.cpr_db.repository.VideoRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+>>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,6 +26,7 @@ public class DataSeeder implements CommandLineRunner {
     private final VideoRepository videoRepository;
     private final SceneRepository sceneRepository;
     private final KnowledgeRepository knowledgeRepository;
+<<<<<<< HEAD
 
     public DataSeeder(VideoRepository videoRepository,
                       SceneRepository sceneRepository,
@@ -22,13 +34,37 @@ public class DataSeeder implements CommandLineRunner {
         this.videoRepository = videoRepository;
         this.sceneRepository = sceneRepository;
         this.knowledgeRepository = knowledgeRepository;
+=======
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public DataSeeder(VideoRepository videoRepository,
+                      SceneRepository sceneRepository,
+                      KnowledgeRepository knowledgeRepository,
+                      UserRepository userRepository,
+                      PasswordEncoder passwordEncoder) {
+        this.videoRepository = videoRepository;
+        this.sceneRepository = sceneRepository;
+        this.knowledgeRepository = knowledgeRepository;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+>>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     }
 
     @Override
     public void run(String... args) {
         if (videoRepository.count() == 0) {
+<<<<<<< HEAD
             videoRepository.save(new Video("video1", "https://example.com/videos/video1.mp4", 120));
             videoRepository.save(new Video("video2", "https://example.com/videos/video2.mp4", 180));
+=======
+            Video v1 = new Video("video1", "https://example.com/videos/video1.mp4", 120);
+            v1.setTitle("CPR Demo Video 1");
+            videoRepository.save(v1);
+            Video v2 = new Video("video2", "https://example.com/videos/video2.mp4", 180);
+            v2.setTitle("CPR Demo Video 2");
+            videoRepository.save(v2);
+>>>>>>> 193e2be (feat: complete all missing backend API endpoints)
         }
 
         if (sceneRepository.count() == 0) {
@@ -40,7 +76,10 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         if (knowledgeRepository.count() == 0) {
+<<<<<<< HEAD
             // ========== 基础 CPR ==========
+=======
+>>>>>>> 193e2be (feat: complete all missing backend API endpoints)
             k("心肺复苏（CPR）是什么？",
               "心肺复苏（CPR）是一种紧急急救技术，通过胸外按压和人工呼吸维持心脏骤停患者的重要器官供血和供氧，直到专业医疗人员接手。它是抢救心搏骤停最有效的手段之一。",
               "基础", "CPR,定义");
@@ -48,6 +87,7 @@ public class DataSeeder implements CommandLineRunner {
               "心脏骤停后 4 分钟内是抢救黄金时间，每延迟 1 分钟存活率下降 7%-10%。普通人掌握 CPR 可以在急救人员到达前维持患者生命。80% 以上的院外心脏骤停发生在家中，学会 CPR 可能挽救家人的生命。",
               "基础", "CPR,重要性");
             k("心肺复苏的基本步骤是什么？",
+<<<<<<< HEAD
               "国际通用的 CPR 步骤为'叫叫 CABD'：\n①叫：确认现场安全，呼叫患者看有无反应\n②叫：呼叫急救电话 120，并找人取 AED\n③C（Compression）：胸外按压，深度 5-6cm，频率 100-120 次/分\n④A（Airway）：开放气道，仰头抬颏\n⑤B（Breathing）：人工呼吸 2 次，每次约 1 秒\n⑥D（Defibrillation）：AED 到达后立即使用",
               "基础", "CPR,步骤,CABD");
             k("如何判断是否需要做心肺复苏？",
@@ -67,10 +107,18 @@ public class DataSeeder implements CommandLineRunner {
               "基础", "CPR,效果,判断");
 
             // ========== AED ==========
+=======
+              "国际通用的 CPR 步骤为叫叫 CABD：1.叫：确认现场安全，呼叫患者看有无反应；2.叫：呼叫急救电话 120，并找人取 AED；3.C：胸外按压，深度 5-6cm，频率 100-120 次/分；4.A：开放气道，仰头抬颏；5.B：人工呼吸 2 次，每次约 1 秒；6.D：AED 到达后立即使用",
+              "基础", "CPR,步骤,CABD");
+            k("成人心肺复苏的按压深度和频率是多少？",
+              "按压深度：至少 5 厘米，不超过 6 厘米；按压频率：100-120 次/分钟；按压位置：两乳头连线中点（胸骨下半部）；要领：用掌根按压，双臂垂直，借身体重力下压，每次按压后让胸廓完全回弹",
+              "基础", "CPR,按压,深度,频率");
+>>>>>>> 193e2be (feat: complete all missing backend API endpoints)
             k("AED 是什么？",
               "AED（自动体外除颤器）是一种便携式急救设备，可以自动分析患者心律，判断是否需要电击除颤，并用语音指导施救者操作。使用简单，非专业人员经过简单培训即可掌握。",
               "AED", "AED,定义");
             k("AED 的使用步骤是什么？",
+<<<<<<< HEAD
               "①打开 AED 电源开关\n②按照机器语音提示，将电极片贴在患者裸露的胸前（一片在右胸上部锁骨下方，一片在左胸外侧乳头下方）\n③确保无人接触患者，AED 自动分析心律\n④如需电击，按下闪烁的电击按钮\n⑤电击后立即继续 CPR，2 分钟后再由 AED 分析",
               "AED", "AED,步骤");
             k("使用 AED 时需要注意什么？",
@@ -130,6 +178,39 @@ public class DataSeeder implements CommandLineRunner {
             k("CPR 成功的标志是什么？",
               "CPR 成功的标志是 ROSC（自主循环恢复）：\n①出现可触及的脉搏\n②自主呼吸恢复\n③意识逐渐恢复\n④面色、口唇由紫绀转红润\n⑤瞳孔缩小\n注意：即使出现上述迹象，仍需持续观察并做好再次施救的准备，直到专业医护人员接手。",
               "常见问题", "CPR,成功,ROSC");
+=======
+              "1.打开 AED 电源开关；2.按照机器语音提示，将电极片贴在患者裸露的胸前；3.确保无人接触患者，AED 自动分析心律；4.如需电击，按下闪烁的电击按钮；5.电击后立即继续 CPR，2 分钟后再由 AED 分析",
+              "AED", "AED,步骤");
+            k("儿童 CPR 和成人 CPR 有什么区别？",
+              "1.按压深度：儿童约 5cm，成人 5-6cm；2.按压手法：儿童根据体型用单手或双手，成人双手；3.按压通气比：单人施救均为 30:2；双人施救时儿童为 15:2；4.人工呼吸量：儿童只需看到胸部微微隆起即可；5.婴儿用两指按压，深度约 4cm",
+              "儿童CPR", "儿童,CPR,区别");
+            k("什么是海姆立克急救法？",
+              "海姆立克急救法用于气道异物梗阻的急救：1.站在患者背后，双臂环抱其腰部；2.一手握拳，拳心向内放在患者肚脐上方、胸骨下方；3.另一手抓住拳头，快速向上向内冲击腹部；4.持续冲击直到异物排出或患者意识丧失",
+              "急救", "海姆立克,异物梗阻");
+            k("做 CPR 会不会造成肋骨骨折？",
+              "有可能。正确的 CPR 按压可能导致肋骨或胸骨骨折，这在急救中是常见的。但请注意：肋骨骨折远好过死亡。有效的按压维持了大脑和心脏的供血，是挽救生命的关键。即使发生骨折，也应继续按压。",
+              "常见问题", "CPR,骨折");
+            k("CPR 应该持续做多久？",
+              "持续 CPR 直到出现以下情况之一：1.患者恢复自主呼吸和意识；2.AED 到达并提示分析心律；3.专业医疗人员接手；4.施救者体力耗尽无法继续；5.现场变得不安全。不要轻易放弃！",
+              "常见问题", "CPR,持续时间");
+        }
+
+        if (!userRepository.existsByUsername("admin")) {
+            User admin = new User();
+            admin.setUsername("admin");
+            admin.setPasswordHash(passwordEncoder.encode("Admin@123456"));
+            admin.setRole("super_admin");
+            admin.setRealName("超级管理员");
+            userRepository.save(admin);
+        }
+
+        if (!userRepository.existsByUsername("testuser")) {
+            User testuser = new User();
+            testuser.setUsername("testuser");
+            testuser.setPasswordHash(passwordEncoder.encode("Test@123456"));
+            testuser.setRole("student");
+            userRepository.save(testuser);
+>>>>>>> 193e2be (feat: complete all missing backend API endpoints)
         }
     }
 
