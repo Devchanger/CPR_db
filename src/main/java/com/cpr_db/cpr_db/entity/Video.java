@@ -5,16 +5,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-<<<<<<< HEAD
-import jakarta.persistence.Table;
-
-=======
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 @Entity
 @Table(name = "videos")
 public class Video {
@@ -32,8 +27,6 @@ public class Video {
     @Column(nullable = false)
     private Integer durationSeconds;
 
-<<<<<<< HEAD
-=======
     @Column(nullable = false, length = 200)
     private String title;
 
@@ -46,7 +39,6 @@ public class Video {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     public Video() {
     }
 
@@ -56,8 +48,6 @@ public class Video {
         this.durationSeconds = durationSeconds;
     }
 
-<<<<<<< HEAD
-=======
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();
@@ -65,7 +55,6 @@ public class Video {
         if (videoId == null) videoId = "v" + System.currentTimeMillis();
     }
 
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     public Long getId() {
         return id;
     }
@@ -97,8 +86,6 @@ public class Video {
     public void setDurationSeconds(Integer durationSeconds) {
         this.durationSeconds = durationSeconds;
     }
-<<<<<<< HEAD
-=======
 
     public String getTitle() {
         return title;
@@ -131,5 +118,4 @@ public class Video {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 }

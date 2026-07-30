@@ -1,16 +1,6 @@
 package com.cpr_db.cpr_db.controller;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
-<<<<<<< HEAD
-import com.cpr_db.cpr_db.dto.UserInfoResponse;
-import com.cpr_db.cpr_db.entity.User;
-import com.cpr_db.cpr_db.repository.UserRepository;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-=======
 import com.cpr_db.cpr_db.common.BusinessException;
 import com.cpr_db.cpr_db.dto.AdminCreateRequest;
 import com.cpr_db.cpr_db.dto.PasswordChangeRequest;
@@ -26,18 +16,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 
 @RestController
 @RequestMapping("/api/v1/user")
 public class UserController {
 
     private final UserRepository userRepository;
-<<<<<<< HEAD
-
-    public UserController(UserRepository userRepository) {
-        this.userRepository = userRepository;
-=======
     private final PasswordEncoder passwordEncoder;
     private final AdminService adminService;
 
@@ -47,19 +31,12 @@ public class UserController {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.adminService = adminService;
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     }
 
     @GetMapping("/info")
     public ResponseEntity<ApiResponse<UserInfoResponse>> getUserInfo(Authentication authentication) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
-<<<<<<< HEAD
-                .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
-        UserInfoResponse info = new UserInfoResponse(user.getId(), user.getUsername(), user.getCreatedAt());
-        return ResponseEntity.ok(ApiResponse.success(info));
-    }
-=======
                 .orElseThrow(() -> new BusinessException(404, "user not found"));
         UserInfoResponse info = new UserInfoResponse(
                 user.getId(), user.getUsername(), user.getRole(),
@@ -110,5 +87,4 @@ public class UserController {
         adminService.deleteUser(id, authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(null, "deleted"));
     }
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 }

@@ -4,19 +4,11 @@ import com.cpr_db.cpr_db.common.ApiResponse;
 import com.cpr_db.cpr_db.entity.Scene;
 import com.cpr_db.cpr_db.service.SceneService;
 import org.springframework.http.ResponseEntity;
-<<<<<<< HEAD
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-=======
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 
 @RestController
 @RequestMapping("/api/v1/scenes")
@@ -32,8 +24,6 @@ public class SceneController {
     public ResponseEntity<ApiResponse<List<Scene>>> getAll() {
         return ResponseEntity.ok(ApiResponse.success(sceneService.getAll()));
     }
-<<<<<<< HEAD
-=======
 
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSceneList(
@@ -73,5 +63,4 @@ public class SceneController {
         String status = body.get("status") == null ? null : body.get("status").toString();
         return ResponseEntity.ok(ApiResponse.success(sceneService.updateSceneStatus(id, status), "updated"));
     }
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 }

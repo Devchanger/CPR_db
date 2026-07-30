@@ -4,17 +4,10 @@ import com.cpr_db.cpr_db.common.ApiResponse;
 import com.cpr_db.cpr_db.dto.VideoResponse;
 import com.cpr_db.cpr_db.service.VideoService;
 import org.springframework.http.ResponseEntity;
-<<<<<<< HEAD
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-=======
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 
 @RestController
 @RequestMapping("/api/v1/videos")
@@ -31,8 +24,6 @@ public class VideoController {
         VideoResponse response = videoService.getVideo(videoId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-<<<<<<< HEAD
-=======
 
     @GetMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> getVideoList(
@@ -71,5 +62,4 @@ public class VideoController {
         String status = body.get("status") == null ? null : body.get("status").toString();
         return ResponseEntity.ok(ApiResponse.success(videoService.updateVideoStatus(id, status), "updated"));
     }
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 }

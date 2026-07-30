@@ -2,13 +2,6 @@ package com.cpr_db.cpr_db.config;
 
 import com.cpr_db.cpr_db.entity.Knowledge;
 import com.cpr_db.cpr_db.entity.Scene;
-<<<<<<< HEAD
-import com.cpr_db.cpr_db.entity.Video;
-import com.cpr_db.cpr_db.repository.KnowledgeRepository;
-import com.cpr_db.cpr_db.repository.SceneRepository;
-import com.cpr_db.cpr_db.repository.VideoRepository;
-import org.springframework.boot.CommandLineRunner;
-=======
 import com.cpr_db.cpr_db.entity.User;
 import com.cpr_db.cpr_db.entity.Video;
 import com.cpr_db.cpr_db.repository.KnowledgeRepository;
@@ -17,7 +10,6 @@ import com.cpr_db.cpr_db.repository.UserRepository;
 import com.cpr_db.cpr_db.repository.VideoRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 import org.springframework.stereotype.Component;
 
 @Component
@@ -26,15 +18,6 @@ public class DataSeeder implements CommandLineRunner {
     private final VideoRepository videoRepository;
     private final SceneRepository sceneRepository;
     private final KnowledgeRepository knowledgeRepository;
-<<<<<<< HEAD
-
-    public DataSeeder(VideoRepository videoRepository,
-                      SceneRepository sceneRepository,
-                      KnowledgeRepository knowledgeRepository) {
-        this.videoRepository = videoRepository;
-        this.sceneRepository = sceneRepository;
-        this.knowledgeRepository = knowledgeRepository;
-=======
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -48,23 +31,17 @@ public class DataSeeder implements CommandLineRunner {
         this.knowledgeRepository = knowledgeRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     }
 
     @Override
     public void run(String... args) {
         if (videoRepository.count() == 0) {
-<<<<<<< HEAD
-            videoRepository.save(new Video("video1", "https://example.com/videos/video1.mp4", 120));
-            videoRepository.save(new Video("video2", "https://example.com/videos/video2.mp4", 180));
-=======
             Video v1 = new Video("video1", "https://example.com/videos/video1.mp4", 120);
             v1.setTitle("CPR Demo Video 1");
             videoRepository.save(v1);
             Video v2 = new Video("video2", "https://example.com/videos/video2.mp4", 180);
             v2.setTitle("CPR Demo Video 2");
             videoRepository.save(v2);
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
         }
 
         if (sceneRepository.count() == 0) {
@@ -76,10 +53,7 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         if (knowledgeRepository.count() == 0) {
-<<<<<<< HEAD
-            // ========== 基础 CPR ==========
 =======
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
             k("心肺复苏（CPR）是什么？",
               "心肺复苏（CPR）是一种紧急急救技术，通过胸外按压和人工呼吸维持心脏骤停患者的重要器官供血和供氧，直到专业医疗人员接手。它是抢救心搏骤停最有效的手段之一。",
               "基础", "CPR,定义");
@@ -87,51 +61,16 @@ public class DataSeeder implements CommandLineRunner {
               "心脏骤停后 4 分钟内是抢救黄金时间，每延迟 1 分钟存活率下降 7%-10%。普通人掌握 CPR 可以在急救人员到达前维持患者生命。80% 以上的院外心脏骤停发生在家中，学会 CPR 可能挽救家人的生命。",
               "基础", "CPR,重要性");
             k("心肺复苏的基本步骤是什么？",
-<<<<<<< HEAD
-              "国际通用的 CPR 步骤为'叫叫 CABD'：\n①叫：确认现场安全，呼叫患者看有无反应\n②叫：呼叫急救电话 120，并找人取 AED\n③C（Compression）：胸外按压，深度 5-6cm，频率 100-120 次/分\n④A（Airway）：开放气道，仰头抬颏\n⑤B（Breathing）：人工呼吸 2 次，每次约 1 秒\n⑥D（Defibrillation）：AED 到达后立即使用",
-              "基础", "CPR,步骤,CABD");
-            k("如何判断是否需要做心肺复苏？",
-              "①轻拍双肩大声呼叫，检查有无反应\n②观察胸部有无起伏，判断有无正常呼吸（5-10 秒内）\n③若患者无反应且无呼吸或仅有濒死喘息，立即开始 CPR\n注意：不要求普通施救者检查脉搏，以免延误抢救",
-              "基础", "CPR,判断");
-            k("成人心肺复苏的按压深度和频率是多少？",
-              "按压深度：至少 5 厘米，不超过 6 厘米\n按压频率：100-120 次/分钟\n按压位置：两乳头连线中点（胸骨下半部）\n要领：用掌根按压，双臂垂直，借身体重力下压，每次按压后让胸廓完全回弹",
-              "基础", "CPR,按压,深度,频率");
-            k("人工呼吸的正确方法是什么？",
-              "①开放气道：仰头抬颏法（一手压前额、另一手抬下颏）\n②捏住患者鼻翼\n③口对口完全包住患者嘴唇\n④缓慢吹气约 1 秒，见胸廓隆起即可\n⑤松开鼻翼，让气体呼出\n⑥共吹气 2 次，每次间隔 1 秒\n按压与通气比例为 30:2",
-              "基础", "CPR,人工呼吸");
-            k("什么是 30:2 的按压通气比？",
-              "30:2 是指进行 30 次胸外按压后，给予 2 次人工呼吸，这是一个完整的 CPR 循环。成人单人施救或双人施救均采用此比例。儿童双人施救时采用 15:2 的比例。",
-              "基础", "CPR,比例");
-            k("CPR 过程中如何判断是否有效？",
-              "①每次按压时可触及大动脉搏动（如颈动脉）\n②患者面色、唇色由苍白或紫绀转为红润\n③瞳孔由大变小\n④出现自主呼吸或挣扎动作\n⑤意识逐渐恢复\n以上任一迹象出现都说明 CPR 有效，应继续施救",
-              "基础", "CPR,效果,判断");
-
-            // ========== AED ==========
 =======
               "国际通用的 CPR 步骤为叫叫 CABD：1.叫：确认现场安全，呼叫患者看有无反应；2.叫：呼叫急救电话 120，并找人取 AED；3.C：胸外按压，深度 5-6cm，频率 100-120 次/分；4.A：开放气道，仰头抬颏；5.B：人工呼吸 2 次，每次约 1 秒；6.D：AED 到达后立即使用",
               "基础", "CPR,步骤,CABD");
             k("成人心肺复苏的按压深度和频率是多少？",
               "按压深度：至少 5 厘米，不超过 6 厘米；按压频率：100-120 次/分钟；按压位置：两乳头连线中点（胸骨下半部）；要领：用掌根按压，双臂垂直，借身体重力下压，每次按压后让胸廓完全回弹",
               "基础", "CPR,按压,深度,频率");
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
             k("AED 是什么？",
               "AED（自动体外除颤器）是一种便携式急救设备，可以自动分析患者心律，判断是否需要电击除颤，并用语音指导施救者操作。使用简单，非专业人员经过简单培训即可掌握。",
               "AED", "AED,定义");
             k("AED 的使用步骤是什么？",
-<<<<<<< HEAD
-              "①打开 AED 电源开关\n②按照机器语音提示，将电极片贴在患者裸露的胸前（一片在右胸上部锁骨下方，一片在左胸外侧乳头下方）\n③确保无人接触患者，AED 自动分析心律\n④如需电击，按下闪烁的电击按钮\n⑤电击后立即继续 CPR，2 分钟后再由 AED 分析",
-              "AED", "AED,步骤");
-            k("使用 AED 时需要注意什么？",
-              "①确保患者胸前干燥，如有水或汗液需擦干\n②贴电极片前移除患者胸前的药物贴片\n③电极片必须直接贴在裸露皮肤上，剪开衣服\n④电击时任何人不得接触患者\n⑤如患者有植入式起搏器，电极片应贴在距起搏器 2.5cm 以外\n⑥8 岁以下儿童应使用儿童电极片或儿童模式",
-              "AED", "AED,注意事项");
-            k("AED 电极片应该贴在什么位置？",
-              "成人标准贴法：\n- 一片贴在右胸上部，锁骨正下方，胸骨右侧\n- 一片贴在左胸乳头外侧，腋前线内侧约 5-6cm 处\n确保电极片不接触、不重叠，避开锁骨、胸骨和乳头。前侧-后侧贴法也可作为备选方案。",
-              "AED", "AED,电极片,位置");
-            k("儿童可以使用 AED 吗？",
-              "可以。1 岁以上儿童均可使用 AED。\n- 1-8 岁：优先使用儿童电极片或开启儿童模式\n- 如无儿童电极片，成人电极片也可使用，但需确保两片不接触\n- 1 岁以下婴儿：不推荐常规使用 AED，除非设备明确标注适用于婴儿",
-              "AED", "AED,儿童");
-
-            // ========== 儿童 CPR ==========
             k("儿童 CPR 和成人 CPR 有什么区别？",
               "①按压深度：儿童约 5cm，成人 5-6cm\n②按压手法：儿童根据体型用单手或双手，成人双手\n③按压通气比：单人施救均为 30:2；双人施救时儿童为 15:2\n④人工呼吸量：儿童只需看到胸部微微隆起即可\n⑤婴儿（<1 岁）用两指按压，深度约 4cm",
               "儿童CPR", "儿童,CPR,区别");
@@ -210,7 +149,6 @@ public class DataSeeder implements CommandLineRunner {
             testuser.setPasswordHash(passwordEncoder.encode("Test@123456"));
             testuser.setRole("student");
             userRepository.save(testuser);
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
         }
     }
 

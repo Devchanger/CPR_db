@@ -1,12 +1,5 @@
 package com.cpr_db.cpr_db.service;
 
-<<<<<<< HEAD
-import com.cpr_db.cpr_db.entity.Scene;
-import com.cpr_db.cpr_db.repository.SceneRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-=======
 import com.cpr_db.cpr_db.common.BusinessException;
 import com.cpr_db.cpr_db.entity.Scene;
 import com.cpr_db.cpr_db.repository.SceneRepository;
@@ -19,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 
 @Service
 public class SceneService {
@@ -33,8 +25,6 @@ public class SceneService {
     public List<Scene> getAll() {
         return sceneRepository.findAllByOrderBySortOrderAsc();
     }
-<<<<<<< HEAD
-=======
 
     public Map<String, Object> getSceneList(String keyword, int page, int pageSize) {
         if (page < 1) page = 1;
@@ -105,5 +95,4 @@ public class SceneService {
         map.put("created_at", scene.getCreatedAt());
         return map;
     }
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 }

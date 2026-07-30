@@ -4,10 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-<<<<<<< HEAD
-=======
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,10 +18,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
-<<<<<<< HEAD
-=======
 @EnableMethodSecurity
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -40,11 +34,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of("*"));
-<<<<<<< HEAD
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-=======
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -59,14 +49,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/v1/auth/**",
-<<<<<<< HEAD
-                                "/api/v1/videos/**",
-                                "/api/v1/qa/presets",
-                                "/api/v1/scenes/**",
-                                "/api/v1/knowledge/**",
-                                "/uploads/**"
-                        ).permitAll()
-=======
                                 "/api/v1/qa/presets",
                                 "/uploads/**"
                         ).permitAll()
@@ -83,7 +65,6 @@ public class SecurityConfig {
                                 "/api/v1/user/password",
                                 "/api/v1/upload/image"
                         ).authenticated()
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

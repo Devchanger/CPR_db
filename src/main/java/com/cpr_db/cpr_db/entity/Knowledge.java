@@ -27,12 +27,9 @@ public class Knowledge {
     @Column(length = 200)
     private String tags;
 
-<<<<<<< HEAD
-=======
     @Column(length = 20)
     private String status;
 
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -44,12 +41,9 @@ public class Knowledge {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
-<<<<<<< HEAD
-=======
         if (status == null) {
             status = "active";
         }
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     }
 
     public Long getId() {
@@ -92,8 +86,6 @@ public class Knowledge {
         this.tags = tags;
     }
 
-<<<<<<< HEAD
-=======
     public String getStatus() {
         return status;
     }
@@ -102,7 +94,6 @@ public class Knowledge {
         this.status = status;
     }
 
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }

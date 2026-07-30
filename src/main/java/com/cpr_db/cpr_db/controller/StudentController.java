@@ -4,18 +4,10 @@ import com.cpr_db.cpr_db.common.ApiResponse;
 import com.cpr_db.cpr_db.entity.Student;
 import com.cpr_db.cpr_db.service.StudentService;
 import org.springframework.http.ResponseEntity;
-<<<<<<< HEAD
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-=======
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 
 @RestController
 @RequestMapping("/api/v1/students")
@@ -28,10 +20,6 @@ public class StudentController {
     }
 
     @GetMapping
-<<<<<<< HEAD
-    public ResponseEntity<ApiResponse<List<Student>>> getAll() {
-        return ResponseEntity.ok(ApiResponse.success(studentService.getAll()));
-=======
     public ResponseEntity<ApiResponse<Map<String, Object>>> getStudentList(
             @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "status", required = false) String status,
@@ -69,6 +57,5 @@ public class StudentController {
     public ResponseEntity<ApiResponse<Student>> updateStatus(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         String status = body.get("status") == null ? null : body.get("status").toString();
         return ResponseEntity.ok(ApiResponse.success(studentService.updateStudentStatus(id, status), "updated"));
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     }
 }

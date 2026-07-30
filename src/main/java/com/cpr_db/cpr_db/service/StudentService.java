@@ -1,12 +1,5 @@
 package com.cpr_db.cpr_db.service;
 
-<<<<<<< HEAD
-import com.cpr_db.cpr_db.entity.Student;
-import com.cpr_db.cpr_db.repository.StudentRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-=======
 import com.cpr_db.cpr_db.common.BusinessException;
 import com.cpr_db.cpr_db.entity.Student;
 import com.cpr_db.cpr_db.repository.StudentRepository;
@@ -19,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 
 @Service
 public class StudentService {
@@ -33,8 +25,6 @@ public class StudentService {
     public List<Student> getAll() {
         return studentRepository.findAll();
     }
-<<<<<<< HEAD
-=======
 
     public Map<String, Object> getStudentList(String keyword, String status, int page, int pageSize) {
         if (page < 1) page = 1;
@@ -113,5 +103,4 @@ public class StudentService {
         map.put("created_at", student.getCreatedAt());
         return map;
     }
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
 }

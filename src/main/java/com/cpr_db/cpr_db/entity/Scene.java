@@ -26,12 +26,9 @@ public class Scene {
     @Column(name = "sort_order")
     private Integer sortOrder;
 
-<<<<<<< HEAD
-=======
     @Column(length = 20)
     private String status;
 
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -46,12 +43,9 @@ public class Scene {
         if (sortOrder == null) {
             sortOrder = 0;
         }
-<<<<<<< HEAD
-=======
         if (status == null) {
             status = "active";
         }
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     }
 
     public Long getId() {
@@ -102,8 +96,6 @@ public class Scene {
         this.sortOrder = sortOrder;
     }
 
-<<<<<<< HEAD
-=======
     public String getStatus() {
         return status;
     }
@@ -112,7 +104,6 @@ public class Scene {
         this.status = status;
     }
 
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
