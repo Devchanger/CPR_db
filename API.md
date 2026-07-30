@@ -2,7 +2,7 @@
 
 **服务地址**: `http://123.57.30.132:8080`  
 **统一响应格式**: `{code, message, data}`  
-**最新更新**: 2026-07-23
+**最新更新**: 2026-07-30
 
 ---
 
@@ -12,10 +12,17 @@
 |------|------|
 | 🔓 | 公开接口，无需 token |
 | 🔐 | 需在 Header 带 `Authorization: Bearer <token>` |
+| 👑 | 需 admin 或 super_admin 权限 |
+| 🔒 | 仅 super_admin 可访问 |
 
 Token 通过登录接口获取，有效期 **24 小时**（86400000ms）。
 
-**种子测试账号**: `testuser` / `Test@123456`
+**种子账号**:
+
+| 账号 | 密码 | 角色 |
+|------|------|------|
+| `admin` | `Admin@123456` | super_admin |
+| `testuser` | `Test@123456` | student |
 
 ---
 
@@ -41,11 +48,7 @@ Content-Type: application/json
 }
 ```
 
-**失败示例**:
-```json
-{"code":400, "message":"username already exists"}
-{"code":400, "message":"username is required"}
-```
+**失败**: `400` username already exists / username is required
 
 ### 1.2 登录 🔓
 
@@ -60,69 +63,95 @@ Content-Type: application/json
 
 ## 二、训练场景 — `/api/v1/scenes`
 
-### 2.1 场景列表 🔓
+### 2.1 场景列表 🔐
 
 ```
 GET /api/v1/scenes
 ```
 
-**响应** (200):
-```json
-{
-  "code": 200, "message": "success",
-  "data": [
-    { "id": 1, "name": "成人 CPR 训练", "description": "标准成人胸外按压与人工呼吸训练场景",
-      "type": "basic", "icon": "heart", "sortOrder": 1, "createdAt": "..." },
-    { "id": 2, "name": "儿童 CPR 训练", "type": "basic", "icon": "child" },
-    { "id": 3, "name": "AED 使用", "type": "basic", "icon": "zap" },
-    { "id": 4, "name": "气道异物梗阻", "type": "advanced", "icon": "alert" },
-    { "id": 5, "name": "综合考核", "type": "advanced", "icon": "star" }
-  ]
-}
+返回所有场景（不分页）。`type`: `basic` | `advanced`
+
+### 2.2 场景分页列表 🔐
+
+```
+GET /api/v1/scenes/list?keyword=&page=1&pageSize=10
 ```
 
-`type`: `basic` | `advanced`  
-`icon`: 前端图标标识名，按需映射。
+**响应**: `{list: [...], total: N}`
+
+### 2.3 场景详情 🔐
+
+```
+GET /api/v1/scenes/{id}
+```
+
+### 2.4 创建场景 👑
+
+```
+POST /api/v1/scenes
+Content-Type: application/json
+```
+
+**请求体**: `{ "name": "...", "description": "...", "type": "basic", "icon": "heart", "sortOrder": 1 }`
+
+### 2.5 更新场景 👑
+
+```
+PUT /api/v1/scenes/{id}
+```
+
+### 2.6 删除场景 👑
+
+```
+DELETE /api/v1/scenes/{id}
+```
+
+### 2.7 修改场景状态 👑
+
+```
+PATCH /api/v1/scenes/{id}/status
+```
+
+**请求体**: `{ "status": "published" }`
 
 ---
 
 ## 三、知识库 — `/api/v1/knowledge`
 
-### 3.1 知识列表 🔓
+### 3.1 知识列表 🔐
 
 ```
 GET /api/v1/knowledge
 GET /api/v1/knowledge?category=AED
 ```
 
-**响应** (200):
-```json
-{
-  "code": 200, "message": "success",
-  "data": [
-    {
-      "id": 1,
-      "question": "心肺复苏（CPR）是什么？",
-      "answer": "心肺复苏（CPR）是一种紧急急救技术，通过胸外按压和人工呼吸...",
-      "category": "基础",
-      "tags": "CPR,定义",
-      "createdAt": "2026-07-23T07:22:27"
-    }
-  ]
-}
+**分类**: 基础(8)、AED(5)、儿童CPR(3)、急救(6)、常见问题(5)，共 27 条。
+
+### 3.2 知识详情 🔐
+
+```
+GET /api/v1/knowledge/{id}
 ```
 
-**分类分布**（共 27 条）:
+### 3.3 创建知识 👑
 
-| 分类 | 条数 |
-|------|:--:|
-| 基础 | 8 |
-| AED | 5 |
-| 儿童CPR | 3 |
-| 急救 | 6 |
-| 常见问题 | 5 |
+```
+POST /api/v1/knowledge
+```
 
-可选参数 `?category=` 按分类筛选。
+**请求体**: `{ "question": "...", "answer": "...", "category": "...", "tags": "..." }`
+
+### 3.4 更新知识 👑
+
+```
+PUT /api/v1/knowledge/{id}
+```
+
+### 3.5 删除知识 👑
+
+```
+DELETE /api/v1/knowledge/{id}
+```
 
 ---
 
@@ -134,72 +163,176 @@ GET /api/v1/knowledge?category=AED
 GET /api/v1/qa/presets
 ```
 
-**响应** (200):
-```json
-{
-  "code": 200, "message": "success",
-  "data": {
-    "presets": [
-      "心肺复苏的正确步骤是什么？",
-      "AED 如何使用？",
-      "按压深度和频率应该是多少？",
-      "如何判断患者是否需要心肺复苏？"
-    ]
-  }
-}
-```
+**响应**: `{ "presets": ["心肺复苏的正确步骤是什么？", ...] }`
 
 ### 4.2 提问 🔐
 
 ```
 POST /api/v1/qa
 Content-Type: application/json
-Authorization: Bearer <token>
 ```
 
 **请求体**:
 ```json
 {
   "question": "string (必填)",
-  "history": [
-    { "role": "user", "content": "上一轮问题" },
-    { "role": "assistant", "content": "上一轮回答" }
-  ]
+  "history": [{ "role": "user", "content": "..." }, { "role": "assistant", "content": "..." }]
 }
 ```
 
-**响应** (200):
-```json
-{ "code": 200, "message": "success", "data": { "answer": "AI 回答内容..." } }
-```
+**响应**: `{ "answer": "AI 回答内容..." }`
 
-> ⚠️ QA API Key 未配置，返回 fallback `"AI 服务返回异常，请稍后重试。"`。
+> ⚠️ QA API Key 未配置时返回 fallback `"AI 服务返回异常，请稍后重试。"`
 
 ---
 
 ## 五、视频 — `/api/v1/videos`
 
-### 5.1 获取视频 🔓
+### 5.1 视频列表 🔐
+
+```
+GET /api/v1/videos?keyword=&skillId=&status=&page=1&pageSize=10
+```
+
+**响应**: `{list: [...], total: N}`
+
+### 5.2 获取单个视频 🔐
 
 ```
 GET /api/v1/videos/{videoId}
 ```
 
-**响应** (200):
-```json
-{
-  "code": 200, "message": "success",
-  "data": { "videoId": "video1", "url": "https://...", "durationSeconds": 120 }
-}
+`videoId` 为字符串（如 `video1` 或 `v1234567890`）。
+
+### 5.3 创建视频 👑
+
+```
+POST /api/v1/videos
 ```
 
-种子数据: `video1`(120s)、`video2`(180s)。
+**请求体**: `{ "title": "...", "url": "...", "skillId": 1, "durationSeconds": 120 }`
+
+### 5.4 更新视频 👑
+
+```
+PUT /api/v1/videos/{id}
+```
+
+### 5.5 删除视频 👑
+
+```
+DELETE /api/v1/videos/{id}
+```
+
+### 5.6 修改视频状态 👑
+
+```
+PATCH /api/v1/videos/{id}/status
+```
+
+**请求体**: `{ "status": "published" }`
 
 ---
 
-## 六、成绩 — `/api/v1/scores`
+## 六、技能 — `/api/v1/skills`
 
-### 6.1 提交成绩 🔐
+### 6.1 技能列表 🔐
+
+```
+GET /api/v1/skills?keyword=&status=&page=1&pageSize=10
+```
+
+### 6.2 技能详情 🔐
+
+```
+GET /api/v1/skills/{id}
+```
+
+### 6.3 创建技能 👑
+
+```
+POST /api/v1/skills
+```
+
+**请求体**: `{ "name": "...", "description": "...", "icon": "...", "sceneId": 1, "sortOrder": 1 }`
+
+### 6.4 更新技能 👑
+
+```
+PUT /api/v1/skills/{id}
+```
+
+### 6.5 删除技能 👑
+
+```
+DELETE /api/v1/skills/{id}
+```
+
+### 6.6 修改技能状态 👑
+
+```
+PATCH /api/v1/skills/{id}/status
+```
+
+**请求体**: `{ "status": "published" }`
+
+---
+
+## 七、训练步骤 — `/api/v1/steps`
+
+### 7.1 步骤列表 🔐
+
+```
+GET /api/v1/steps?skillId=&status=&page=1&pageSize=10
+```
+
+### 7.2 步骤详情 🔐
+
+```
+GET /api/v1/steps/{id}
+```
+
+### 7.3 创建步骤 👑
+
+```
+POST /api/v1/steps
+```
+
+**请求体**: `{ "skillId": 1, "title": "...", "description": "...", "order": 1 }`
+
+### 7.4 更新步骤 👑
+
+```
+PUT /api/v1/steps/{id}
+```
+
+### 7.5 删除步骤 👑
+
+```
+DELETE /api/v1/steps/{id}
+```
+
+### 7.6 修改步骤状态 👑
+
+```
+PATCH /api/v1/steps/{id}/status
+```
+
+**请求体**: `{ "status": "active" }`
+
+### 7.7 步骤排序 👑
+
+```
+PUT /api/v1/steps/{id}/reorder
+```
+
+**请求体**: `{ "direction": "up" }` 或 `{ "direction": "down" }`
+
+---
+
+## 八、成绩 — `/api/v1/scores`
+
+### 8.1 提交成绩 🔐
 
 ```
 POST /api/v1/scores
@@ -211,7 +344,7 @@ Content-Type: application/json
 {
   "scene": "string (必填)",
   "skill": "string (必填)",
-  "totalScore": 85.5 (必填),
+  "totalScore": 85.5,
   "compressionDepthAvg": 5.2,
   "compressionRateAvg": 110.0,
   "errorCount": 2,
@@ -219,222 +352,236 @@ Content-Type: application/json
 }
 ```
 
-**响应** (200):
-```json
-{
-  "code": 200, "message": "success",
-  "data": {
-    "id": 1, "username": "testuser", "scene": "成人CPR训练",
-    "skill": "胸外按压", "totalScore": 85.5,
-    "compressionDepthAvg": 5.2, "compressionRateAvg": 110.0,
-    "errorCount": 2, "stepDetails": "...", "createdAt": "..."
-  }
-}
-```
-
-### 6.2 成绩列表 🔐
+### 8.2 成绩列表 🔐
 
 ```
-GET /api/v1/scores
-GET /api/v1/scores?username=testuser
+GET /api/v1/scores?username=&all=&page=1&pageSize=10
 ```
 
-不带 `username` 返回当前用户成绩；带参数只能查自己，查他人返回 403。
+- 普通用户：不带 `username` 返回本人成绩；带参数只能查自己
+- admin/super_admin：`all=true` 查全部，`username=xxx` 查指定用户
 
-### 6.3 最新成绩 🔐
+### 8.3 成绩详情 🔐
 
 ```
-GET /api/v1/scores/latest
-GET /api/v1/scores/latest?username=testuser
+GET /api/v1/scores/{id}
 ```
 
-权限规则同 6.2。返回单条 `ScoreDto` 或 `null`。
+### 8.4 删除成绩 👑
 
-### 6.4 成绩统计 🔐
+```
+DELETE /api/v1/scores/{id}
+```
+
+### 8.5 最新成绩 🔐
+
+```
+GET /api/v1/scores/latest?username=
+```
+
+权限规则同 8.2。返回单条或 `null`。
+
+### 8.6 成绩统计 🔐
 
 ```
 GET /api/v1/scores/stats
 ```
 
-**响应** (200):
-```json
-{
-  "code": 200, "message": "success",
-  "data": {
-    "totalAttempts": 3,
-    "averageScore": 85.2,
-    "highestScore": 92.5,
-    "lowestScore": 78.0,
-    "scenesTrained": 3,
-    "skillsTrained": 2,
-    "recentScores": [
-      { "id": 3, "scene": "儿童CPR训练", "totalScore": 78.0, ... },
-      { "id": 2, "scene": "AED使用", "totalScore": 92.5, ... },
-      { "id": 1, "scene": "成人CPR训练", "totalScore": 85.0, ... }
-    ]
-  }
-}
-```
-
-`recentScores` 最多返回最近 5 条，按时间倒序。无数据时返回 `[]`。
+**响应**: `{ totalAttempts, averageScore, highestScore, lowestScore, scenesTrained, skillsTrained, recentScores[] }`
 
 ---
 
-## 七、学员 — `/api/v1/students`
+## 九、学员 — `/api/v1/students`
 
-### 7.1 学员列表 🔐
+### 9.1 学员列表 🔐
 
 ```
-GET /api/v1/students
+GET /api/v1/students?keyword=&status=&page=1&pageSize=10
 ```
 
-**响应** (200):
-```json
-{
-  "code": 200, "message": "success",
-  "data": [
-    {
-      "id": 1, "name": "张三", "phone": "13800138000",
-      "email": "zhangsan@example.com", "groupName": "2026夏季班",
-      "certStatus": "certified", "trainedAt": "2026-07-20T10:00:00",
-      "createdAt": "2026-07-20T10:00:00"
-    }
-  ]
-}
+**响应**: `{list: [...], total: N}`
+
+### 9.2 学员详情 🔐
+
+```
+GET /api/v1/students/{id}
 ```
 
-`certStatus`: `certified` | `training` | `expired`  
-⚠️ 无种子数据，返回 `[]`。
+### 9.3 创建学员 👑
+
+```
+POST /api/v1/students
+```
+
+**请求体**: `{ "name": "...", "phone": "...", "email": "...", "groupName": "...", "certStatus": "certified", "trainedAt": "..." }`
+
+`certStatus`: `certified` | `training` | `expired`
+
+### 9.4 更新学员 👑
+
+```
+PUT /api/v1/students/{id}
+```
+
+### 9.5 删除学员 👑
+
+```
+DELETE /api/v1/students/{id}
+```
+
+### 9.6 修改学员状态 👑
+
+```
+PATCH /api/v1/students/{id}/status
+```
 
 ---
 
-## 八、用户速查 — `/api/v1/user`
+## 十、用户管理 — `/api/v1/user`
 
-### 8.1 基本信息 🔐
+### 10.1 用户信息 🔐
 
 ```
 GET /api/v1/user/info
 ```
 
-**响应** (200):
-```json
-{
-  "code": 200, "message": "success",
-  "data": { "id": 1, "username": "testuser", "createdAt": "..." }
-}
+**响应**: `{ "id": 1, "username": "testuser", "role": "student", "realName": "...", "avatar": "...", "createdAt": "..." }`
+
+### 10.2 修改密码 🔐
+
+```
+PUT /api/v1/user/password
 ```
 
-> 如需完整个人信息（姓名、手机、班级、头像等），请使用下方的 `/api/v1/profile` 接口。
+**请求体**: `{ "oldPassword": "...", "newPassword": "..." }`
+
+### 10.3 管理员列表 🔒
+
+```
+GET /api/v1/user/admins?keyword=&page=1&pageSize=10
+```
+
+### 10.4 创建管理员 🔒
+
+```
+POST /api/v1/user/admins
+```
+
+**请求体**: `{ "username": "...", "password": "...", "role": "admin" }`
+
+> 安全措施：不能删除自己、不能删除最后一个 super_admin
+
+### 10.5 修改用户角色 🔒
+
+```
+PUT /api/v1/user/{id}/role
+```
+
+**请求体**: `{ "role": "admin" }`
+
+### 10.6 删除用户 🔒
+
+```
+DELETE /api/v1/user/{id}
+```
 
 ---
 
-## 九、个人信息 — `/api/v1/profile`  ⭐新增
+## 十一、个人信息 — `/api/v1/profile`
 
-### 9.1 获取个人信息 🔐
+### 11.1 获取个人信息 🔐
 
 ```
 GET /api/v1/profile
 ```
 
-**响应** (200):
-```json
-{
-  "code": 200, "message": "success",
-  "data": {
-    "id": 1,
-    "username": "testuser",
-    "realName": "张三",
-    "role": "student",
-    "avatar": "/uploads/avatars/1_xxx.jpg",
-    "gender": 1,
-    "phone": "13800138000",
-    "studentId": "2024001",
-    "className": "护理2班",
-    "createdAt": "2026-07-22T23:37:10"
-  }
-}
-```
+**响应**: `{ id, username, realName, role, avatar, gender, phone, studentId, className, createdAt }`
 
-`gender`: 0=未知, 1=男, 2=女  
-`role`: `"student"` | `"admin"`（默认 `"student"`）
-
-### 9.2 更新个人信息 🔐
+### 11.2 更新个人信息 🔐
 
 ```
 PUT /api/v1/profile
-Content-Type: application/json
 ```
 
-**请求体**（只传需要更新的字段）:
-```json
-{
-  "realName": "张三",
-  "gender": 1,
-  "phone": "13800138000",
-  "studentId": "2024001",
-  "className": "护理2班"
-}
-```
+**请求体**（只传需更新字段）: `{ "realName": "...", "gender": 1, "phone": "...", "studentId": "...", "className": "..." }`
 
-**手机号格式**: `1[3-9]xxxxxxxxx`（11位中国大陆手机号）
+手机号格式：`1[3-9]xxxxxxxxx`（11位）
 
-**响应** (200):
-```json
-{ "code": 200, "message": "更新成功", "data": { /* 完整 profile */ } }
-```
-
-**错误**:
-- `400`: 参数校验失败（如手机号格式不对）
-- `409`: 手机号或学号已被其他用户使用
-
-### 9.3 上传头像 🔐
+### 11.3 上传头像 🔐
 
 ```
 POST /api/v1/profile/avatar
 Content-Type: multipart/form-data
 ```
 
-**表单参数**:
+**表单参数**: `file` — jpg/png/webp，≤ 2MB
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `file` | File | 图片文件（jpg / png / webp，≤ 2MB） |
-
-**响应** (200):
-```json
-{
-  "code": 200, "message": "上传成功",
-  "data": { "avatar_url": "/uploads/avatars/1_1753234567.jpg" }
-}
-```
-
-完整头像 URL = `http://123.57.30.132:8080` + `avatar_url`。
-
-**错误**:
-- `400`: 文件格式不支持或超过大小限制
+**响应**: `{ "avatar_url": "/uploads/avatars/1_xxx.jpg" }`
 
 ---
 
-## 十、姿态识别 — `/api/v1/pose`
+## 十二、文件上传 — `/api/v1/upload`
 
-### 10.1 姿态检测 🔐
+### 12.1 上传图片 🔐
+
+```
+POST /api/v1/upload/image
+Content-Type: multipart/form-data
+```
+
+**表单参数**: `file` — jpg/jpeg/png/webp，≤ 2MB
+
+**响应**: `{ "url": "/uploads/images/yyyyMMdd/timestamp_filename.jpg" }`
+
+### 12.2 上传视频 👑
+
+```
+POST /api/v1/upload/video
+Content-Type: multipart/form-data
+```
+
+**表单参数**: `file` — mp4/webm/mov，≤ 500MB
+
+**响应**: `{ "url": "...", "durationSeconds": 0 }`
+
+---
+
+## 十三、操作日志 — `/api/v1/logs`
+
+### 13.1 日志查询 🔒
+
+```
+GET /api/v1/logs?adminId=&action=&targetType=&startDate=&endDate=&page=1&pageSize=10
+```
+
+**查询参数**:
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| adminId | Long | 管理员 ID |
+| action | String | 操作类型 |
+| targetType | String | 目标类型 |
+| startDate | String | 起始日期 |
+| endDate | String | 结束日期 |
+| page | int | 页码，默认 1 |
+| pageSize | int | 每页条数，默认 10 |
+
+**响应**: `{list: [...], total: N}`
+
+---
+
+## 十四、姿态识别 — `/api/v1/pose`
+
+### 14.1 姿态检测 🔐
 
 ```
 POST /api/v1/pose/detect
 Content-Type: multipart/form-data
 ```
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `image` | File | 图片文件 |
+**表单参数**: `image` — 图片文件
 
-**响应** (200):
-```json
-{
-  "code": 200, "message": "success",
-  "data": { "angles": [/* AngleAnalysis[] */], "landmarks": [/* PoseLandmark[] */] }
-}
-```
+**响应**: `{ "angles": [...], "landmarks": [...] }`
 
 ---
 
@@ -450,8 +597,8 @@ Content-Type: multipart/form-data
 | 403 | 无权限访问 |
 | 404 | 资源不存在 |
 | 405 | HTTP 方法不允许 |
-| 409 | 数据冲突（如手机号/学号已存在） |
-| 415 | Content-Type 不支持（请用 application/json） |
+| 409 | 数据冲突 |
+| 415 | Content-Type 不支持 |
 | 500 | 服务器内部错误 |
 
 ### 统一响应结构
@@ -464,58 +611,85 @@ interface ApiResponse<T> {
 }
 ```
 
-### 前端调用示例
+### 分页响应结构
 
-```javascript
-const BASE = 'http://123.57.30.132:8080';
-
-// 登录
-const { data: { token } } = await fetch(`${BASE}/api/v1/auth/login`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ username: 'testuser', password: 'Test@123456' })
-}).then(r => r.json());
-
-// 获取个人资料
-const { data: profile } = await fetch(`${BASE}/api/v1/profile`, {
-  headers: { 'Authorization': `Bearer ${token}` }
-}).then(r => r.json());
-
-// 更新个人资料
-await fetch(`${BASE}/api/v1/profile`, {
-  method: 'PUT',
-  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-  body: JSON.stringify({ realName: '李四', phone: '13900001111' })
-});
-
-// 上传头像
-const formData = new FormData();
-formData.append('file', fileInput.files[0]);
-const { data: { avatar_url } } = await fetch(`${BASE}/api/v1/profile/avatar`, {
-  method: 'POST',
-  headers: { 'Authorization': `Bearer ${token}` },
-  body: formData
-}).then(r => r.json());
+```typescript
+interface PageResponse<T> {
+  list: T[];
+  total: number;
+}
 ```
+
+### 角色权限说明
+
+| 角色 | 权限 |
+|------|------|
+| `student` | 查询公开数据 + 管理自己的成绩/个人信息 |
+| `admin` | student 权限 + 管理场景/知识/视频/技能/步骤/学员/上传视频/删除成绩 |
+| `super_admin` | admin 权限 + 管理员管理 + 操作日志查看 |
 
 ### 完整接口速查表
 
-| 模块 | 方法 | 路径 | 鉴权 |
-|------|------|------|:--:|
-| 认证 | `POST` | `/api/v1/auth/register` | 🔓 |
-| 认证 | `POST` | `/api/v1/auth/login` | 🔓 |
-| 场景 | `GET` | `/api/v1/scenes` | 🔓 |
-| 知识库 | `GET` | `/api/v1/knowledge` | 🔓 |
-| 问答 | `GET` | `/api/v1/qa/presets` | 🔓 |
-| 问答 | `POST` | `/api/v1/qa` | 🔐 |
-| 视频 | `GET` | `/api/v1/videos/{videoId}` | 🔓 |
-| 成绩 | `POST` | `/api/v1/scores` | 🔐 |
-| 成绩 | `GET` | `/api/v1/scores` | 🔐 |
-| 成绩 | `GET` | `/api/v1/scores/latest` | 🔐 |
-| 成绩 | `GET` | `/api/v1/scores/stats` | 🔐 |
-| 学员 | `GET` | `/api/v1/students` | 🔐 |
-| 用户 | `GET` | `/api/v1/user/info` | 🔐 |
-| 个人信息 | `GET` | `/api/v1/profile` | 🔐 |
-| 个人信息 | `PUT` | `/api/v1/profile` | 🔐 |
-| 个人信息 | `POST` | `/api/v1/profile/avatar` | 🔐 |
-| 姿态 | `POST` | `/api/v1/pose/detect` | 🔐 |
+| 模块 | 方法 | 路径 | 鉴权 | 说明 |
+|------|------|------|:--:|------|
+| 认证 | POST | /api/v1/auth/register | 🔓 | 注册 |
+| 认证 | POST | /api/v1/auth/login | 🔓 | 登录 |
+| 场景 | GET | /api/v1/scenes | 🔐 | 场景列表 |
+| 场景 | GET | /api/v1/scenes/list | 🔐 | 场景分页 |
+| 场景 | GET | /api/v1/scenes/{id} | 🔐 | 场景详情 |
+| 场景 | POST | /api/v1/scenes | 👑 | 创建场景 |
+| 场景 | PUT | /api/v1/scenes/{id} | 👑 | 更新场景 |
+| 场景 | DELETE | /api/v1/scenes/{id} | 👑 | 删除场景 |
+| 场景 | PATCH | /api/v1/scenes/{id}/status | 👑 | 修改状态 |
+| 知识库 | GET | /api/v1/knowledge | 🔐 | 知识列表 |
+| 知识库 | GET | /api/v1/knowledge/{id} | 🔐 | 知识详情 |
+| 知识库 | POST | /api/v1/knowledge | 👑 | 创建知识 |
+| 知识库 | PUT | /api/v1/knowledge/{id} | 👑 | 更新知识 |
+| 知识库 | DELETE | /api/v1/knowledge/{id} | 👑 | 删除知识 |
+| 问答 | GET | /api/v1/qa/presets | 🔓 | 预设问题 |
+| 问答 | POST | /api/v1/qa | 🔐 | 智能提问 |
+| 视频 | GET | /api/v1/videos | 🔐 | 视频列表 |
+| 视频 | GET | /api/v1/videos/{videoId} | 🔐 | 获取视频 |
+| 视频 | POST | /api/v1/videos | 👑 | 创建视频 |
+| 视频 | PUT | /api/v1/videos/{id} | 👑 | 更新视频 |
+| 视频 | DELETE | /api/v1/videos/{id} | 👑 | 删除视频 |
+| 视频 | PATCH | /api/v1/videos/{id}/status | 👑 | 修改状态 |
+| 技能 | GET | /api/v1/skills | 🔐 | 技能列表 |
+| 技能 | GET | /api/v1/skills/{id} | 🔐 | 技能详情 |
+| 技能 | POST | /api/v1/skills | 👑 | 创建技能 |
+| 技能 | PUT | /api/v1/skills/{id} | 👑 | 更新技能 |
+| 技能 | DELETE | /api/v1/skills/{id} | 👑 | 删除技能 |
+| 技能 | PATCH | /api/v1/skills/{id}/status | 👑 | 修改状态 |
+| 步骤 | GET | /api/v1/steps | 🔐 | 步骤列表 |
+| 步骤 | GET | /api/v1/steps/{id} | 🔐 | 步骤详情 |
+| 步骤 | POST | /api/v1/steps | 👑 | 创建步骤 |
+| 步骤 | PUT | /api/v1/steps/{id} | 👑 | 更新步骤 |
+| 步骤 | DELETE | /api/v1/steps/{id} | 👑 | 删除步骤 |
+| 步骤 | PATCH | /api/v1/steps/{id}/status | 👑 | 修改状态 |
+| 步骤 | PUT | /api/v1/steps/{id}/reorder | 👑 | 步骤排序 |
+| 成绩 | POST | /api/v1/scores | 🔐 | 提交成绩 |
+| 成绩 | GET | /api/v1/scores | 🔐 | 成绩列表 |
+| 成绩 | GET | /api/v1/scores/{id} | 🔐 | 成绩详情 |
+| 成绩 | DELETE | /api/v1/scores/{id} | 👑 | 删除成绩 |
+| 成绩 | GET | /api/v1/scores/latest | 🔐 | 最新成绩 |
+| 成绩 | GET | /api/v1/scores/stats | 🔐 | 成绩统计 |
+| 学员 | GET | /api/v1/students | 🔐 | 学员列表 |
+| 学员 | GET | /api/v1/students/{id} | 🔐 | 学员详情 |
+| 学员 | POST | /api/v1/students | 👑 | 创建学员 |
+| 学员 | PUT | /api/v1/students/{id} | 👑 | 更新学员 |
+| 学员 | DELETE | /api/v1/students/{id} | 👑 | 删除学员 |
+| 学员 | PATCH | /api/v1/students/{id}/status | 👑 | 修改状态 |
+| 用户 | GET | /api/v1/user/info | 🔐 | 用户信息 |
+| 用户 | PUT | /api/v1/user/password | 🔐 | 修改密码 |
+| 用户 | GET | /api/v1/user/admins | 🔒 | 管理员列表 |
+| 用户 | POST | /api/v1/user/admins | 🔒 | 创建管理员 |
+| 用户 | PUT | /api/v1/user/{id}/role | 🔒 | 修改角色 |
+| 用户 | DELETE | /api/v1/user/{id} | 🔒 | 删除用户 |
+| 个人信息 | GET | /api/v1/profile | 🔐 | 获取信息 |
+| 个人信息 | PUT | /api/v1/profile | 🔐 | 更新信息 |
+| 个人信息 | POST | /api/v1/profile/avatar | 🔐 | 上传头像 |
+| 上传 | POST | /api/v1/upload/image | 🔐 | 上传图片 |
+| 上传 | POST | /api/v1/upload/video | 👑 | 上传视频 |
+| 日志 | GET | /api/v1/logs | 🔒 | 日志查询 |
+| 姿态 | POST | /api/v1/pose/detect | 🔐 | 姿态检测 |
+| 静态 | GET | /uploads/** | 🔓 | 静态文件 |

@@ -64,28 +64,52 @@ java -jar target/cpr_db-0.0.1-SNAPSHOT.jar
 
 统一前缀 `/api/v1/`，返回格式 `{code, message, data}`。鉴权方式：`Authorization: Bearer <token>`。
 
-| 模块 | 方法 | 路径 | 认证 | 说明 |
+| 符号 | 含义 |
+|:--:|------|
+| 🔓 | 公开，无需 token |
+| 🔐 | 需登录 |
+| 👑 | 需 admin 或 super_admin |
+| 🔒 | 仅 super_admin |
+
+| 模块 | 方法 | 路径 | 鉴权 | 说明 |
 |------|------|------|:--:|------|
 | 认证 | `POST` | `/api/v1/auth/register` | 🔓 | 用户注册 |
 | 认证 | `POST` | `/api/v1/auth/login` | 🔓 | 用户登录，返回 JWT |
-| 场景 | `GET` | `/api/v1/scenes` | 🔓 | 训练场景列表（5 个） |
-| 知识库 | `GET` | `/api/v1/knowledge` | 🔓 | 知识库列表（27 条，支持 `?category=`） |
+| 场景 | `GET` | `/api/v1/scenes` | 🔐 | 场景列表（全量） |
+| 场景 | `GET` | `/api/v1/scenes/list` | 🔐 | 场景分页 |
+| 场景 | `GET/POST/PUT/DELETE/PATCH` | `/api/v1/scenes[/{id}[/status]]` | 🔐/👑 | 场景 CRUD |
+| 知识库 | `GET` | `/api/v1/knowledge` | 🔐 | 知识列表（支持 `?category=`） |
+| 知识库 | `GET/POST/PUT/DELETE` | `/api/v1/knowledge[/{id}]` | 🔐/👑 | 知识 CRUD |
 | 问答 | `GET` | `/api/v1/qa/presets` | 🔓 | 预设问题 |
 | 问答 | `POST` | `/api/v1/qa` | 🔐 | 智能提问 |
-| 视频 | `GET` | `/api/v1/videos/{videoId}` | 🔓 | 获取视频 |
+| 视频 | `GET` | `/api/v1/videos` | 🔐 | 视频列表 |
+| 视频 | `GET/POST/PUT/DELETE/PATCH` | `/api/v1/videos[/{id}[/status]]` | 🔐/👑 | 视频 CRUD |
+| 技能 | `GET` | `/api/v1/skills` | 🔐 | 技能列表 |
+| 技能 | `GET/POST/PUT/DELETE/PATCH` | `/api/v1/skills[/{id}[/status]]` | 🔐/👑 | 技能 CRUD |
+| 步骤 | `GET` | `/api/v1/steps` | 🔐 | 步骤列表 |
+| 步骤 | `GET/POST/PUT/DELETE/PATCH` | `/api/v1/steps[/{id}[/status]]` | 🔐/👑 | 步骤 CRUD |
+| 步骤 | `PUT` | `/api/v1/steps/{id}/reorder` | 👑 | 步骤排序 |
 | 成绩 | `POST` | `/api/v1/scores` | 🔐 | 提交成绩 |
-| 成绩 | `GET` | `/api/v1/scores` | 🔐 | 成绩列表 |
+| 成绩 | `GET` | `/api/v1/scores` | 🔐 | 成绩列表（admin 支持 `?all=true`） |
+| 成绩 | `GET/DELETE` | `/api/v1/scores/{id}` | 🔐/👑 | 成绩详情/删除 |
 | 成绩 | `GET` | `/api/v1/scores/latest` | 🔐 | 最新成绩 |
 | 成绩 | `GET` | `/api/v1/scores/stats` | 🔐 | 成绩统计 |
 | 学员 | `GET` | `/api/v1/students` | 🔐 | 学员列表 |
-| 用户 | `GET` | `/api/v1/user/info` | 🔐 | 用户速查（id/username/createdAt） |
-| 个人信息 | `GET` | `/api/v1/profile` | 🔐 | 完整个人信息 |
-| 个人信息 | `PUT` | `/api/v1/profile` | 🔐 | 更新个人信息 |
+| 学员 | `GET/POST/PUT/DELETE/PATCH` | `/api/v1/students[/{id}[/status]]` | 🔐/👑 | 学员 CRUD |
+| 用户 | `GET` | `/api/v1/user/info` | 🔐 | 用户信息（含 role/realName/avatar） |
+| 用户 | `PUT` | `/api/v1/user/password` | 🔐 | 修改密码 |
+| 用户 | `GET/POST` | `/api/v1/user/admins` | 🔒 | 管理员列表/创建 |
+| 用户 | `PUT` | `/api/v1/user/{id}/role` | 🔒 | 修改角色 |
+| 用户 | `DELETE` | `/api/v1/user/{id}` | 🔒 | 删除用户 |
+| 个人信息 | `GET/PUT` | `/api/v1/profile` | 🔐 | 个人信息 |
 | 个人信息 | `POST` | `/api/v1/profile/avatar` | 🔐 | 上传头像 |
-| 姿态 | `POST` | `/api/v1/pose/detect` | 🔐 | 姿态识别（图片上传） |
+| 上传 | `POST` | `/api/v1/upload/image` | 🔐 | 上传图片（jpg/png/webp ≤2MB） |
+| 上传 | `POST` | `/api/v1/upload/video` | 👑 | 上传视频（mp4/webm/mov ≤500MB） |
+| 日志 | `GET` | `/api/v1/logs` | 🔒 | 操作日志查询 |
+| 姿态 | `POST` | `/api/v1/pose/detect` | 🔐 | 姿态识别 |
 | 静态 | `GET` | `/uploads/**` | 🔓 | 头像等静态文件 |
 
-详细请求/响应格式见 [API.md](./API.md)。
+共 **14 个 Controller，约 60 个端点**。详细请求/响应格式见 [API.md](./API.md)。
 
 ## 项目结构
 
@@ -97,19 +121,24 @@ src/main/java/com/cpr_db/cpr_db/
 │   ├── BusinessException.java        # 业务异常（支持自定义 HTTP code）
 │   └── GlobalExceptionHandler.java   # 全局异常处理（10 种异常 → 精确 HTTP 状态码）
 ├── config/
-│   ├── DataSeeder.java               # 启动种子数据（场景/知识库/视频）
+│   ├── DataSeeder.java               # 启动种子数据（场景/知识库/视频/管理员/测试用户）
+│   ├── JacksonConfig.java            # 全局 Jackson SNAKE_CASE 序列化
 │   └── WebMvcConfig.java             # 静态文件映射 /uploads/**
 ├── controller/
 │   ├── AuthController.java           # 注册 / 登录
-│   ├── KnowledgeController.java      # 知识库查询
+│   ├── KnowledgeController.java      # 知识库 CRUD
 │   ├── PoseController.java           # 姿态识别
 │   ├── ProfileController.java        # 个人信息（含头像上传）
 │   ├── QaController.java             # 智能问答
-│   ├── SceneController.java          # 训练场景
-│   ├── ScoreController.java          # 成绩管理 + 统计
-│   ├── StudentController.java        # 学员管理
-│   ├── UserController.java           # 用户速查
-│   └── VideoController.java          # 视频资源
+│   ├── SceneController.java          # 训练场景 CRUD + 状态管理
+│   ├── ScoreController.java          # 成绩管理 + 统计 + admin 全量查询
+│   ├── StudentController.java        # 学员 CRUD + 状态管理
+│   ├── SkillController.java         # 技能 CRUD + 状态管理
+│   ├── StepController.java           # 步骤 CRUD + 状态 + 排序
+│   ├── UserController.java           # 用户信息 / 密码 / 管理员管理
+│   ├── VideoController.java          # 视频 CRUD + 状态管理
+│   ├── UploadController.java         # 图片/视频文件上传
+│   └── LogController.java            # 操作日志查询
 ├── dto/
 │   ├── AuthRequest / AuthResponse / RegisterRequest
 │   ├── ProfileResponse / ProfileUpdateRequest
@@ -117,25 +146,32 @@ src/main/java/com/cpr_db/cpr_db/
 │   ├── QaRequest / QaResponse / ChatMessage / PresetsResponse
 │   ├── PoseDetectResponse / PoseLandmark / AngleAnalysis
 │   ├── UserInfoResponse / VideoResponse
+│   └── PasswordChangeRequest / AdminCreateRequest
 ├── entity/
 │   ├── User.java                     # 用户（含 profile 字段）
 │   ├── Score.java                    # 成绩
 │   ├── Video.java                    # 视频
 │   ├── Scene.java                    # 训练场景
 │   ├── Student.java                  # 学员
-│   └── Knowledge.java                # 知识库
+│   ├── Knowledge.java                # 知识库
+│   ├── Skill.java                    # 技能
+│   ├── Step.java                     # 训练步骤
+│   └── Log.java                      # 操作日志
 ├── repository/
 │   ├── UserRepository.java
 │   ├── ScoreRepository.java
 │   ├── VideoRepository.java
 │   ├── SceneRepository.java
 │   ├── StudentRepository.java
-│   └── KnowledgeRepository.java
+│   ├── KnowledgeRepository.java
+│   ├── SkillRepository.java
+│   ├── StepRepository.java
+│   └── LogRepository.java
 ├── security/
-│   ├── SecurityConfig.java           # CORS + 公开/鉴权路由
+│   ├── SecurityConfig.java           # CORS + 三层权限 + @EnableMethodSecurity
 │   ├── JwtTokenUtil.java
 │   ├── JwtAuthenticationFilter.java
-│   └── CustomUserDetailsService.java
+│   └── CustomUserDetailsService.java  # DB role 字段 → SimpleGrantedAuthority
 └── service/
     ├── AuthService.java
     ├── KnowledgeService.java
@@ -144,19 +180,26 @@ src/main/java/com/cpr_db/cpr_db/
     ├── SceneService.java
     ├── ScoreService.java
     ├── StudentService.java
-    └── VideoService.java
+    ├── VideoService.java
+    ├── SkillService.java
+    ├── StepService.java
+    ├── LogService.java
+    └── AdminService.java
 ```
 
 ## 数据库表
 
 | 表名 | 说明 | 记录数 |
 |------|------|:--:|
-| `users` | 用户（含个人资料字段） | 1（种子） |
+| `users` | 用户（含个人资料字段、role） | 2（种子：admin + testuser） |
 | `scores` | 训练成绩 | 按需 |
 | `videos` | 视频资源 | 2（种子） |
 | `scenes` | 训练场景 | 5（种子） |
 | `knowledge` | 知识库 | 27（种子） |
 | `students` | 学员 | 按需 |
+| `skills` | 技能 | 按需 |
+| `steps` | 训练步骤 | 按需 |
+| `operation_logs` | 操作日志 | 按需 |
 
 JPA `ddl-auto=update` 自动建表/加列，无需手动执行 DDL。
 
@@ -164,12 +207,19 @@ JPA `ddl-auto=update` 自动建表/加列，无需手动执行 DDL。
 
 - JWT 无状态认证（HMAC-SHA256），24 小时过期
 - BCrypt 密码哈希存储
-- 用户仅可查询本人成绩，通过 JWT username 隔离
-- **公开路由**: auth、scenes、knowledge、qa/presets、videos、uploads
-- **鉴权路由**: scores、students、user、profile、pose、qa
+- **三层权限体系**：
+  - `permitAll`：`/auth/**`、`/qa/presets`、`/uploads/**`
+  - `authenticated`：videos、scenes、knowledge、skills、steps、scores、profile、students、user/info、user/password、upload/image、qa、pose
+  - `@PreAuthorize` 方法级：admin/super_admin 管理写操作，super_admin 独占管理员管理和日志
+- `@EnableMethodSecurity` 启用方法级权限注解
+- `CustomUserDetailsService` 从 DB role 字段映射权限（`hasAuthority` 而非 `hasRole`）
+- Jackson 全局 SNAKE_CASE 序列化（Java 驼峰 → JSON 下划线）
+- 用户仅可查询本人成绩，admin 可通过 `?all=true` 查全部
+- 管理员管理安全措施：不能删除自己、不能删除最后一个 super_admin
 - 登录失败统一返回 401，防止用户枚举
-- 全局异常处理覆盖 10 种异常类型，返回精确 HTTP 状态码（400/401/403/404/405/409/415/500）
-- 头像上传校验格式（jpg/png/webp）和大小（≤2MB），手机号/学号唯一性校验
+- 全局异常处理覆盖 10 种异常类型，返回精确 HTTP 状态码
+- 文件上传校验：图片 jpg/png/webp ≤2MB，视频 mp4/webm/mov ≤500MB
+- 手机号/学号唯一性校验
 
 > ℹ️ 生产环境请替换 `jwt.secret` 为强随机密钥，通过环境变量注入。
 
