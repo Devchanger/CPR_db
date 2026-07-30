@@ -12,9 +12,11 @@
 | 符号 | 含义 |
 |------|------|
 | 🔓 | 公开接口，无需 token |
-| 🔐 | 需在 Header 带 `Authorization: Bearer <token>` |
-| 👑 | 需 admin 或 super_admin 权限 |
-| 🔒 | 仅 super_admin 可访问 |
+| 🔐 | 仅需登录（任意已登录用户，含 `student`，均可访问） |
+| 👑 | 需 `admin` 或 `super_admin` 权限（管理 / 写操作） |
+| 🔒 | 仅 `super_admin` 可访问 |
+
+> 注：`🔐` 与 `👑` 常被混淆——`🔐` **只要求"已登录"，不要求 admin**。训练内容（场景 / 技能 / 步骤 / 知识 / 视频 / 成绩）的读取接口均为 `🔐`，学员端登录后即可调用，无需 admin 权限。
 
 Token 通过登录接口获取，有效期 **24 小时**（86400000ms）。
 
@@ -70,7 +72,9 @@ Content-Type: application/json
 GET /api/v1/scenes
 ```
 
-返回所有场景（不分页）。`type`: `basic` | `advanced`
+返回所有场景（**纯 JSON 数组，非分页信封**——`data` 直接是数组，无 `list/total/page` 字段）。`type`: `basic` | `advanced`。
+
+> 需要分页请改用 `GET /api/v1/scenes/list`（返回统一信封 `{list, total, page, page_size}`）。
 
 ### 2.2 场景分页列表 🔐
 
@@ -85,6 +89,8 @@ GET /api/v1/scenes/list?keyword=&page=1&pageSize=10
 ```
 GET /api/v1/scenes/{id}
 ```
+
+> 🔐 仅需登录即可访问，任意已登录用户含 `student` 均可读取，非 admin 专属。
 
 ### 2.4 创建场景 👑
 
@@ -133,6 +139,8 @@ GET /api/v1/knowledge?category=AED
 ```
 GET /api/v1/knowledge/{id}
 ```
+
+> 🔐 仅需登录即可访问，任意已登录用户含 `student` 均可读取，非 admin 专属。
 
 ### 3.3 创建知识 👑
 
@@ -249,6 +257,8 @@ GET /api/v1/skills?keyword=&status=&page=1&pageSize=10
 GET /api/v1/skills/{id}
 ```
 
+> 🔐 仅需登录即可访问，任意已登录用户含 `student` 均可读取，非 admin 专属。
+
 ### 6.3 创建技能 👑
 
 ```
@@ -292,6 +302,8 @@ GET /api/v1/steps?skillId=&status=&page=1&pageSize=10
 ```
 GET /api/v1/steps/{id}
 ```
+
+> 🔐 仅需登录即可访问，任意已登录用户含 `student` 均可读取，非 admin 专属。
 
 ### 7.3 创建步骤 👑
 
@@ -380,6 +392,8 @@ GET /api/v1/scores?username=&all=&page=1&pageSize=10
 GET /api/v1/scores/{id}
 ```
 
+> ⚠️ **403 越权**：非 admin 且非成绩本人时查询他人成绩详情，返回 `403`。前端在查详情前应确保当前用户有权限（本人或 admin）。
+
 ### 8.4 删除成绩 👑
 
 ```
@@ -429,6 +443,8 @@ POST /api/v1/students
 **请求体**: `{ "name": "...", "phone": "...", "email": "...", "groupName": "...", "certStatus": "certified", "trainedAt": "..." }`
 
 `certStatus`: `certified` | `training` | `expired`
+
+> ⚠️ **字段映射（前后端对齐）**：后端字段名为 `name`（**必填**，`@NotBlank`）。前端当前若传 `username` / `role` / `password` 会被忽略或导致校验失败——请改为 `name`，且**不要**传 `role`、`password`（后端 `StudentCreateRequest` 无此字段）。`trainedAt` 为日期时间，如 `2026-07-30T10:00:00`。
 
 ### 9.4 更新学员 👑
 
@@ -638,7 +654,7 @@ interface ApiResponse<T> {
 
 ### 分页响应结构
 
-> 所有列表接口统一返回以下信封。`pageSize` 服务端硬上限为 **100**，超过自动截断为 100。
+> `pageSize` 服务端硬上限为 **100**，超过自动截断为 100。
 
 ```typescript
 interface PageResponse<T> {
@@ -649,11 +665,23 @@ interface PageResponse<T> {
 }
 ```
 
+### 列表接口返回格式说明（重要）
+
+**并非所有 GET 列表都返回分页信封**，前端解析时需区分，切勿统一用 `data.list`：
+
+| 返回格式 | 接口 | `data` 形态 |
+|----------|------|-------------|
+| **分页信封** `{list, total, page, page_size}` | `/scenes/list`、`/knowledge`、`/videos`、`/skills`、`/steps`、`/students`、`/logs`、`/scores` | 对象，含 `list` 数组 |
+| **纯数组（无信封）** | `/scenes`（全量）、`/qa/presets` | 数组本身（或 `{presets:[...]}`） |
+| **单资源 / 聚合对象** | 各 `/{id}` 详情、`/scores/latest`、`/scores/stats`、`/videos/{videoId}` | 单个对象或 `null` |
+
+> 建议前端兼容解析：`const rows = Array.isArray(data) ? data : (data?.list ?? [])`。
+
 ### 角色权限说明
 
 | 角色 | 权限 |
 |------|------|
-| `student` | 查询公开数据 + 管理自己的成绩/个人信息 |
+| `student` | 登录后查询训练数据（场景 / 技能 / 步骤 / 知识 / 视频 / 成绩）+ 管理自己的成绩 / 个人信息 |
 | `admin` | student 权限 + 管理场景/知识/视频/技能/步骤/学员/上传视频/删除成绩 |
 | `super_admin` | admin 权限 + 管理员管理 + 操作日志查看 |
 
