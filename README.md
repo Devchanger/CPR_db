@@ -6,6 +6,9 @@
 > **API 文档**: [API.md](./API.md)  
 > **种子账号**: `testuser` / `Test@123456`
 
+> 🟢 **质量门禁（2026-07-30）**：后端 12 个 P0 缺陷 + P1-6 已闭环，独立复跑 `mvn test` **48/48 全绿**（BUILD SUCCESS）。验证结论与逐项证据见 [BACKEND_P0_CLOSURE.md](./BACKEND_P0_CLOSURE.md)；契约更新见 [API.md](./API.md)。  
+> ⚠️ `REVIEW-REPORT.md` 为**修复前**的评审基线快照，不代表当前状态，请勿据此判断缺陷是否已修。
+
 ## 技术栈
 
 | 层次       | 技术选型                                         |
@@ -220,6 +223,12 @@ JPA `ddl-auto=update` 自动建表/加列，无需手动执行 DDL。
 - 全局异常处理覆盖 10 种异常类型，返回精确 HTTP 状态码
 - 文件上传校验：图片 jpg/png/webp ≤2MB，视频 mp4/webm/mov ≤500MB
 - 手机号/学号唯一性校验
+- **CORS 来源外部化**：通过 `cpr.cors.allowed-origins` 配置（默认 `http://localhost:3000,http://localhost:5173`）；配置为 `*` 时自动禁用 credentials，避免通配符带凭据的安全风险
+- **分页上限保护**：所有列表接口 `pageSize` 服务端硬上限 100，超限自动截断（防 DoS）
+- **统一分页响应信封**：列表接口统一返回 `{list, total, page, page_size}`
+- **请求体字段校验**：入参 DTO 使用 Jakarta `@Valid`，字段缺失/格式错误返回 400 并带字段级 message
+- **文件上传防路径穿越**：存储文件名使用 UUID 重命名并剥离 `..` / 路径分隔符，杜绝目录穿越与原文件名泄露
+- **最后 super_admin 守卫**：删除最后一个 `super_admin` 返回 409 `cannot delete the last super admin`
 
 > ℹ️ 生产环境请替换 `jwt.secret` 为强随机密钥，通过环境变量注入。
 
@@ -238,6 +247,16 @@ JPA `ddl-auto=update` 自动建表/加列，无需手动执行 DDL。
 | **学号唯一** | 同学号规则同上 |
 | **头像限制** | 仅 jpg/png/webp，≤ 2MB |
 | **空数据** | `students` 无种子数据返回 `[]`；`stats` 无成绩时各字段为 0/空数组 |
+
+### 运行单元测试
+
+```bash
+# 本仓库已验证可跑通的测试命令（./mvnw 在本机存在 classpath 问题，请用此脚本）
+./mvn-local.sh test
+```
+
+结果：**Tests run: 48, Failures: 0, Errors: 0, Skipped: 0 — BUILD SUCCESS**。  
+其中基线 16 个 + P0 专项回归 32 个，无 `@Disabled` / 无删减断言。完整证据见 [BACKEND_P0_CLOSURE.md](./BACKEND_P0_CLOSURE.md)。
 
 ### 测试方法
 

@@ -2,7 +2,8 @@
 
 **服务地址**: `http://123.57.30.132:8080`  
 **统一响应格式**: `{code, message, data}`  
-**最新更新**: 2026-07-30
+**最新更新**: 2026-07-30  
+**契约状态**: 已对齐后端 12 个 P0 闭环（统一分页信封 / 分页上限 100 / 403 越权 / 409 守卫），详见 [BACKEND_P0_CLOSURE.md](./BACKEND_P0_CLOSURE.md)
 
 ---
 
@@ -77,7 +78,7 @@ GET /api/v1/scenes
 GET /api/v1/scenes/list?keyword=&page=1&pageSize=10
 ```
 
-**响应**: `{list: [...], total: N}`
+**响应**: `{list: [...], total: N, page: 1, page_size: 10}`
 
 ### 2.3 场景详情 🔐
 
@@ -194,7 +195,7 @@ Content-Type: application/json
 GET /api/v1/videos?keyword=&skillId=&status=&page=1&pageSize=10
 ```
 
-**响应**: `{list: [...], total: N}`
+**响应**: `{list: [...], total: N, page: 1, page_size: 10}`
 
 ### 5.2 获取单个视频 🔐
 
@@ -361,6 +362,18 @@ GET /api/v1/scores?username=&all=&page=1&pageSize=10
 - 普通用户：不带 `username` 返回本人成绩；带参数只能查自己
 - admin/super_admin：`all=true` 查全部，`username=xxx` 查指定用户
 
+**响应信封**:
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": { "list": [...], "total": 12, "page": 1, "page_size": 10 }
+}
+```
+
+> ⚠️ **403 越权**：非 admin 用户若携带他人 `username`（如 `?username=admin`）查询，返回 `403` + message `only current user may query scores`。前端须对此 403 做专门提示，而非通用"无权限"。
+
 ### 8.3 成绩详情 🔐
 
 ```
@@ -399,7 +412,7 @@ GET /api/v1/scores/stats
 GET /api/v1/students?keyword=&status=&page=1&pageSize=10
 ```
 
-**响应**: `{list: [...], total: N}`
+**响应**: `{list: [...], total: N, page: 1, page_size: 10}`
 
 ### 9.2 学员详情 🔐
 
@@ -566,7 +579,7 @@ GET /api/v1/logs?adminId=&action=&targetType=&startDate=&endDate=&page=1&pageSiz
 | page | int | 页码，默认 1 |
 | pageSize | int | 每页条数，默认 10 |
 
-**响应**: `{list: [...], total: N}`
+**响应**: `{list: [...], total: N, page: 1, page_size: 10}`
 
 ---
 
@@ -601,6 +614,18 @@ Content-Type: multipart/form-data
 | 415 | Content-Type 不支持 |
 | 500 | 服务器内部错误 |
 
+### 业务错误码补充（P0 闭环新增语义）
+
+以下为本期闭环后**新增/强化的具体业务语义**，前端对接时须做差异化提示：
+
+| HTTP | code | message 示例 | 触发场景 |
+|:----:|------|--------------|----------|
+| 400 | 400 | `<字段> 不能为空` / 格式错误 | 请求体 DTO `@Valid` 字段校验失败（如成绩提交缺 `scene`/`skill`） |
+| 403 | 403 | `only current user may query scores` | 非 admin 用户越权查询他人成绩（P0-11） |
+| 409 | 409 | `cannot delete the last super admin` | 试图删除最后一个 `super_admin`（P0-10） |
+
+> 以上 403 / 409 在 REVIEW-REPORT.md 修复前未强制返回，前端旧逻辑可能未处理，请按新契约补齐。
+
 ### 统一响应结构
 
 ```typescript
@@ -613,10 +638,14 @@ interface ApiResponse<T> {
 
 ### 分页响应结构
 
+> 所有列表接口统一返回以下信封。`pageSize` 服务端硬上限为 **100**，超过自动截断为 100。
+
 ```typescript
 interface PageResponse<T> {
   list: T[];
-  total: number;
+  total: number;     // 符合条件的总记录数
+  page: number;      // 当前页码，默认 1
+  page_size: number; // 每页条数，默认 10，上限 100
 }
 ```
 
