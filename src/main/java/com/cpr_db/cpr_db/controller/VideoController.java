@@ -1,8 +1,12 @@
 package com.cpr_db.cpr_db.controller;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
+import com.cpr_db.cpr_db.dto.VideoCreateRequest;
 import com.cpr_db.cpr_db.dto.VideoResponse;
+import com.cpr_db.cpr_db.dto.VideoUpdateRequest;
+import com.cpr_db.cpr_db.entity.Video;
 import com.cpr_db.cpr_db.service.VideoService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +25,8 @@ public class VideoController {
 
     @GetMapping("/{videoId}")
     public ResponseEntity<ApiResponse<VideoResponse>> getVideo(@PathVariable String videoId) {
-        VideoResponse response = videoService.getVideo(videoId);
+        Video video = videoService.getVideoEntity(videoId);
+        VideoResponse response = new VideoResponse(video.getVideoId(), video.getUrl(), video.getDurationSeconds());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -37,15 +42,15 @@ public class VideoController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> createVideo(@RequestBody Map<String, Object> body) {
-        return ResponseEntity.ok(ApiResponse.success(videoService.createVideo(body), "created"));
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createVideo(@Valid @RequestBody VideoCreateRequest req) {
+        return ResponseEntity.ok(ApiResponse.success(videoService.createVideo(req), "created"));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateVideo(@PathVariable Long id,
-                                                                        @RequestBody Map<String, Object> body) {
-        return ResponseEntity.ok(ApiResponse.success(videoService.updateVideo(id, body), "updated"));
+                                                                        @Valid @RequestBody VideoUpdateRequest req) {
+        return ResponseEntity.ok(ApiResponse.success(videoService.updateVideo(id, req), "updated"));
     }
 
     @DeleteMapping("/{id}")

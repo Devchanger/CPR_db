@@ -24,7 +24,8 @@ public class Video {
     @Column(nullable = false)
     private String url;
 
-    @Column(nullable = false)
+    // Nullable: unknown video duration is stored as null instead of a hard-coded 0 (review P2-2).
+    @Column
     private Integer durationSeconds;
 
     @Column(nullable = false, length = 200)

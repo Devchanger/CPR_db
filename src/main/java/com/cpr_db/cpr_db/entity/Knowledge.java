@@ -1,6 +1,5 @@
 package com.cpr_db.cpr_db.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -12,13 +11,12 @@ public class Knowledge {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "title", nullable = false, length = 200)
-    @JsonProperty("question")
+    // Unified field name: Java field, DB column and JSON output all use "question".
+    @Column(name = "question", nullable = false, length = 200)
     private String question;
 
     @Lob
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
-    @JsonProperty("answer")
     private String answer;
 
     @Column(length = 50)

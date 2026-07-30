@@ -1,7 +1,10 @@
 package com.cpr_db.cpr_db.controller;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
+import com.cpr_db.cpr_db.dto.StepCreateRequest;
+import com.cpr_db.cpr_db.dto.StepUpdateRequest;
 import com.cpr_db.cpr_db.service.StepService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -34,15 +37,15 @@ public class StepController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> createStep(@RequestBody Map<String, Object> body) {
-        return ResponseEntity.ok(ApiResponse.success(stepService.createStep(body), "created"));
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createStep(@Valid @RequestBody StepCreateRequest req) {
+        return ResponseEntity.ok(ApiResponse.success(stepService.createStep(req), "created"));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateStep(@PathVariable Long id,
-                                                                      @RequestBody Map<String, Object> body) {
-        return ResponseEntity.ok(ApiResponse.success(stepService.updateStep(id, body), "updated"));
+                                                                      @Valid @RequestBody StepUpdateRequest req) {
+        return ResponseEntity.ok(ApiResponse.success(stepService.updateStep(id, req), "updated"));
     }
 
     @DeleteMapping("/{id}")

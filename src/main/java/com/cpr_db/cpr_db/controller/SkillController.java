@@ -1,7 +1,10 @@
 package com.cpr_db.cpr_db.controller;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
+import com.cpr_db.cpr_db.dto.SkillCreateRequest;
+import com.cpr_db.cpr_db.dto.SkillUpdateRequest;
 import com.cpr_db.cpr_db.service.SkillService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -34,15 +37,15 @@ public class SkillController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> createSkill(@RequestBody Map<String, Object> body) {
-        return ResponseEntity.ok(ApiResponse.success(skillService.createSkill(body), "created"));
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createSkill(@Valid @RequestBody SkillCreateRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(skillService.createSkill(request), "created"));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateSkill(@PathVariable Long id,
-                                                                       @RequestBody Map<String, Object> body) {
-        return ResponseEntity.ok(ApiResponse.success(skillService.updateSkill(id, body), "updated"));
+                                                                       @Valid @RequestBody SkillUpdateRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(skillService.updateSkill(id, request), "updated"));
     }
 
     @DeleteMapping("/{id}")

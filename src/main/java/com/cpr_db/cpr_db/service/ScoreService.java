@@ -1,6 +1,7 @@
 package com.cpr_db.cpr_db.service;
 
 import com.cpr_db.cpr_db.common.BusinessException;
+import com.cpr_db.cpr_db.common.SecurityUtil;
 import com.cpr_db.cpr_db.dto.ScoreDto;
 import com.cpr_db.cpr_db.dto.ScoreStatsResponse;
 import com.cpr_db.cpr_db.dto.ScoreSubmitRequest;
@@ -8,9 +9,10 @@ import com.cpr_db.cpr_db.entity.Score;
 import com.cpr_db.cpr_db.repository.ScoreRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,12 +21,17 @@ import java.util.stream.Collectors;
 @Service
 public class ScoreService {
 
-    private final ScoreRepository scoreRepository;
+    private static final int MAX_PAGE_SIZE = 100;
 
-    public ScoreService(ScoreRepository scoreRepository) {
+    private final ScoreRepository scoreRepository;
+    private final LogService logService;
+
+    public ScoreService(ScoreRepository scoreRepository, LogService logService) {
         this.scoreRepository = scoreRepository;
+        this.logService = logService;
     }
 
+    @Transactional
     public ScoreDto saveScore(String username, Long userId, ScoreSubmitRequest request) {
         Score score = new Score();
         score.setUserId(userId);
@@ -37,83 +44,87 @@ public class ScoreService {
         score.setErrorCount(request.getErrorCount());
         score.setStepDetails(request.getStepDetails());
         Score saved = scoreRepository.save(score);
+        // Non-blocking audit log of the submission (review P1-5).
+        try {
+            logService.log(null, SecurityUtil.currentUsername(), "submit_score", "score",
+                    saved.getId(), "submitted score total=" + saved.getTotalScore() + " scene=" + saved.getScene(),
+                    SecurityUtil.currentIp());
+        } catch (Exception ignored) {
+            // logging must not break the submission flow
+        }
         return toDto(saved);
     }
 
-    public List<ScoreDto> getUserScores(String username) {
-        return scoreRepository.findByUsernameOrderByCreatedAtDesc(username).stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+    // Paginated, unified response for a single user's scores (review P0-9 / P0-12).
+    @Transactional(readOnly = true)
+    public Map<String, Object> getUserScores(String username, int page, int pageSize) {
+        page = clampPage(page);
+        pageSize = clampPageSize(pageSize);
+        Page<Score> result = scoreRepository.findByUsername(username,
+                PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "createdAt")));
+        List<ScoreDto> list = result.getContent().stream().map(this::toDto).collect(Collectors.toList());
+        Map<String, Object> map = new HashMap<>();
+        map.put("list", list);
+        map.put("total", result.getTotalElements());
+        map.put("page", result.getNumber() + 1);
+        map.put("page_size", result.getSize());
+        return map;
     }
 
+    @Transactional(readOnly = true)
     public ScoreDto getLatestScore(String username) {
         return scoreRepository.findFirstByUsernameOrderByCreatedAtDesc(username)
                 .map(this::toDto)
                 .orElseThrow(() -> new BusinessException(404, "score not found"));
     }
 
+    // DB-level aggregation instead of loading all rows into memory (review P1-6).
+    @Transactional(readOnly = true)
     public ScoreStatsResponse getStats(String username) {
-        List<Score> allScores = scoreRepository.findByUsernameOrderByCreatedAtDesc(username);
-
         ScoreStatsResponse stats = new ScoreStatsResponse();
-        stats.setTotalAttempts(allScores.size());
-
-        if (!allScores.isEmpty()) {
-            stats.setAverageScore(allScores.stream()
-                    .filter(s -> s.getTotalScore() != null)
-                    .mapToDouble(Score::getTotalScore)
-                    .average()
-                    .orElse(0.0));
-            stats.setHighestScore(allScores.stream()
-                    .filter(s -> s.getTotalScore() != null)
-                    .mapToDouble(Score::getTotalScore)
-                    .max()
-                    .orElse(0.0));
-            stats.setLowestScore(allScores.stream()
-                    .filter(s -> s.getTotalScore() != null)
-                    .mapToDouble(Score::getTotalScore)
-                    .min()
-                    .orElse(0.0));
-            stats.setScenesTrained((int) allScores.stream()
-                    .map(Score::getScene)
-                    .filter(s -> s != null)
-                    .distinct()
-                    .count());
-            stats.setSkillsTrained((int) allScores.stream()
-                    .map(Score::getSkill)
-                    .filter(s -> s != null)
-                    .distinct()
-                    .count());
-            stats.setRecentScores(allScores.stream()
-                    .limit(5)
-                    .map(this::toDto)
-                    .collect(Collectors.toList()));
-        } else {
-            stats.setRecentScores(List.of());
-        }
-
+        stats.setTotalAttempts((int) scoreRepository.countByUsername(username));
+        stats.setAverageScore(scoreRepository.averageTotalScoreByUsername(username));
+        stats.setHighestScore(scoreRepository.maxTotalScoreByUsername(username));
+        stats.setLowestScore(scoreRepository.minTotalScoreByUsername(username));
+        Long scenes = scoreRepository.countDistinctSceneByUsername(username);
+        Long skills = scoreRepository.countDistinctSkillByUsername(username);
+        stats.setScenesTrained(scenes == null ? 0 : scenes.intValue());
+        stats.setSkillsTrained(skills == null ? 0 : skills.intValue());
+        List<ScoreDto> recent = scoreRepository
+                .findTop5ByUsernameOrderByCreatedAtDesc(username, PageRequest.of(0, 5))
+                .getContent().stream().map(this::toDto).collect(Collectors.toList());
+        stats.setRecentScores(recent);
         return stats;
     }
 
+    // Paginated, unified response for all scores (admin view, review P0-9 / P0-12).
+    @Transactional(readOnly = true)
     public Map<String, Object> getAllScores(int page, int pageSize) {
-        if (page < 1) page = 1;
-        if (pageSize < 1) pageSize = 10;
-        Page<Score> result = scoreRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page - 1, pageSize));
-        List<ScoreDto> list = result.getContent().stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+        page = clampPage(page);
+        pageSize = clampPageSize(pageSize);
+        Page<Score> result = scoreRepository.findAllByOrderByCreatedAtDesc(
+                PageRequest.of(page - 1, pageSize));
+        List<ScoreDto> list = result.getContent().stream().map(this::toDto).collect(Collectors.toList());
         Map<String, Object> map = new HashMap<>();
         map.put("list", list);
         map.put("total", result.getTotalElements());
+        map.put("page", result.getNumber() + 1);
+        map.put("page_size", result.getSize());
         return map;
     }
 
-    public ScoreDto getScoreById(Long id) {
+    // Owner check: non-admins may only read their own score (review P0-11).
+    @Transactional(readOnly = true)
+    public ScoreDto getScoreById(Long id, String currentUsername, boolean isAdmin) {
         Score score = scoreRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "score not found"));
+        if (!isAdmin && !currentUsername.equals(score.getUsername())) {
+            throw new BusinessException(403, "not allowed to access this score");
+        }
         return toDto(score);
     }
 
+    @Transactional
     public void deleteScore(Long id) {
         Score score = scoreRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "score not found"));
@@ -133,5 +144,14 @@ public class ScoreService {
         dto.setStepDetails(score.getStepDetails());
         dto.setCreatedAt(score.getCreatedAt());
         return dto;
+    }
+
+    private int clampPage(int page) {
+        return page < 1 ? 1 : page;
+    }
+
+    private int clampPageSize(int pageSize) {
+        if (pageSize < 1) return 10;
+        return Math.min(pageSize, MAX_PAGE_SIZE);
     }
 }

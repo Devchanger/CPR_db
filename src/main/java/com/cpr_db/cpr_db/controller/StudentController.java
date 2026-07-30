@@ -1,8 +1,11 @@
 package com.cpr_db.cpr_db.controller;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
+import com.cpr_db.cpr_db.dto.StudentCreateRequest;
+import com.cpr_db.cpr_db.dto.StudentUpdateRequest;
 import com.cpr_db.cpr_db.entity.Student;
 import com.cpr_db.cpr_db.service.StudentService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -35,14 +38,14 @@ public class StudentController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
-    public ResponseEntity<ApiResponse<Student>> createStudent(@RequestBody Student body) {
-        return ResponseEntity.ok(ApiResponse.success(studentService.createStudent(body), "created"));
+    public ResponseEntity<ApiResponse<Student>> createStudent(@Valid @RequestBody StudentCreateRequest req) {
+        return ResponseEntity.ok(ApiResponse.success(studentService.createStudent(req), "created"));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
-    public ResponseEntity<ApiResponse<Student>> updateStudent(@PathVariable Long id, @RequestBody Student body) {
-        return ResponseEntity.ok(ApiResponse.success(studentService.updateStudent(id, body), "updated"));
+    public ResponseEntity<ApiResponse<Student>> updateStudent(@PathVariable Long id, @Valid @RequestBody StudentUpdateRequest req) {
+        return ResponseEntity.ok(ApiResponse.success(studentService.updateStudent(id, req), "updated"));
     }
 
     @DeleteMapping("/{id}")

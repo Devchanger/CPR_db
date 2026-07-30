@@ -4,9 +4,8 @@ import com.cpr_db.cpr_db.common.ApiResponse;
 import com.cpr_db.cpr_db.dto.ScoreDto;
 import com.cpr_db.cpr_db.dto.ScoreStatsResponse;
 import com.cpr_db.cpr_db.dto.ScoreSubmitRequest;
-import com.cpr_db.cpr_db.entity.User;
-import com.cpr_db.cpr_db.repository.UserRepository;
 import com.cpr_db.cpr_db.service.ScoreService;
+import com.cpr_db.cpr_db.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,20 +21,19 @@ import java.util.stream.Collectors;
 public class ScoreController {
 
     private final ScoreService scoreService;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    public ScoreController(ScoreService scoreService, UserRepository userRepository) {
+    public ScoreController(ScoreService scoreService, UserService userService) {
         this.scoreService = scoreService;
-        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     @PostMapping
     public ResponseEntity<ApiResponse<ScoreDto>> submitScore(Authentication authentication,
                                                              @Valid @RequestBody ScoreSubmitRequest request) {
         String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("current user not found"));
-        ScoreDto saved = scoreService.saveScore(username, user.getId(), request);
+        Long userId = userService.getUserByUsername(username).getId();
+        ScoreDto saved = scoreService.saveScore(username, userId, request);
         return ResponseEntity.ok(ApiResponse.success(saved));
     }
 
@@ -51,17 +49,19 @@ public class ScoreController {
             return ResponseEntity.ok(ApiResponse.success(scoreService.getAllScores(page, pageSize)));
         }
         if (username != null && !username.isBlank() && isAdmin) {
-            return ResponseEntity.ok(ApiResponse.success(scoreService.getUserScores(username)));
+            return ResponseEntity.ok(ApiResponse.success(scoreService.getUserScores(username, page, pageSize)));
         }
         if (username != null && !username.isBlank() && !username.equals(currentUsername) && !isAdmin) {
             return ResponseEntity.status(403).body(ApiResponse.fail(403, "only current user may query scores"));
         }
-        return ResponseEntity.ok(ApiResponse.success(scoreService.getUserScores(currentUsername)));
+        return ResponseEntity.ok(ApiResponse.success(scoreService.getUserScores(currentUsername, page, pageSize)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ScoreDto>> getScoreById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(scoreService.getScoreById(id)));
+    public ResponseEntity<ApiResponse<ScoreDto>> getScoreById(@PathVariable Long id, Authentication authentication) {
+        String currentUsername = authentication.getName();
+        boolean isAdmin = isAdmin(authentication);
+        return ResponseEntity.ok(ApiResponse.success(scoreService.getScoreById(id, currentUsername, isAdmin)));
     }
 
     @DeleteMapping("/{id}")

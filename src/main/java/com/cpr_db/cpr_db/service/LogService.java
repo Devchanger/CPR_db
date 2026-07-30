@@ -27,6 +27,7 @@ public class LogService {
                                        String startDate, String endDate, int page, int pageSize) {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
+        if (pageSize > 100) pageSize = 100;
         PageRequest pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         LocalDateTime start = parseDateTime(startDate);

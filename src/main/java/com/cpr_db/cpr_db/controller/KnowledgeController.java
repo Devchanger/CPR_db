@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/knowledge")
@@ -20,12 +20,11 @@ public class KnowledgeController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Knowledge>>> getAll(
-            @RequestParam(name = "category", required = false) String category) {
-        if (category != null && !category.isBlank()) {
-            return ResponseEntity.ok(ApiResponse.success(knowledgeService.getByCategory(category)));
-        }
-        return ResponseEntity.ok(ApiResponse.success(knowledgeService.getAll()));
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAll(
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "pageSize", defaultValue = "10") int pageSize) {
+        return ResponseEntity.ok(ApiResponse.success(knowledgeService.getKnowledgeList(category, page, pageSize)));
     }
 
     @GetMapping("/{id}")

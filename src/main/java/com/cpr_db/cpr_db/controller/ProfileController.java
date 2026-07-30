@@ -6,6 +6,7 @@ import com.cpr_db.cpr_db.dto.ProfileResponse;
 import com.cpr_db.cpr_db.dto.ProfileUpdateRequest;
 import com.cpr_db.cpr_db.entity.User;
 import com.cpr_db.cpr_db.repository.UserRepository;
+import com.cpr_db.cpr_db.service.UploadService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,24 +14,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/profile")
 public class ProfileController {
 
     private final UserRepository userRepository;
+    private final UploadService uploadService;
 
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
-    private static final long MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-    private static final Path AVATAR_DIR = Paths.get("/opt/cpr-db/uploads/avatars");
-
-    public ProfileController(UserRepository userRepository) {
+    public ProfileController(UserRepository userRepository, UploadService uploadService) {
         this.userRepository = userRepository;
+        this.uploadService = uploadService;
     }
 
     // ========== GET /api/v1/profile ==========
@@ -48,7 +44,6 @@ public class ProfileController {
 
         User user = getCurrentUser(authentication);
 
-        // 手机号唯一性校验（排除自身）
         if (request.getPhone() != null && !request.getPhone().isBlank()) {
             userRepository.findByPhone(request.getPhone()).ifPresent(existing -> {
                 if (!existing.getId().equals(user.getId())) {
@@ -57,7 +52,6 @@ public class ProfileController {
             });
         }
 
-        // 学号唯一性校验（排除自身）
         if (request.getStudentId() != null && !request.getStudentId().isBlank()) {
             userRepository.findByStudentId(request.getStudentId()).ifPresent(existing -> {
                 if (!existing.getId().equals(user.getId())) {
@@ -66,7 +60,6 @@ public class ProfileController {
             });
         }
 
-        // 部分更新：只更新非 null 字段
         if (request.getRealName() != null) user.setRealName(request.getRealName());
         if (request.getGender() != null) user.setGender(request.getGender());
         if (request.getPhone() != null) user.setPhone(request.getPhone().isBlank() ? null : request.getPhone());
@@ -83,37 +76,10 @@ public class ProfileController {
             Authentication authentication,
             @RequestParam("file") MultipartFile file) {
 
-        // 校验文件类型
-        String originalName = file.getOriginalFilename();
-        String ext = "";
-        if (originalName != null && originalName.contains(".")) {
-            ext = originalName.substring(originalName.lastIndexOf(".") + 1).toLowerCase();
-        }
-        if (!ALLOWED_EXTENSIONS.contains(ext)) {
-            throw new BusinessException(400, "不支持的文件格式，仅支持 jpg/png/webp");
-        }
-
-        // 校验文件大小
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new BusinessException(400, "文件大小不能超过 2MB");
-        }
-
         User user = getCurrentUser(authentication);
-
-        // 保存到绝对路径
-        String extFinal = ext;
-        String filename = user.getId() + "_" + System.currentTimeMillis() + "." + extFinal;
-
-        try {
-            Files.createDirectories(AVATAR_DIR);
-            Path filePath = AVATAR_DIR.resolve(filename);
-            Files.write(filePath, file.getBytes());
-        } catch (IOException e) {
-            throw new BusinessException(500, "头像保存失败，请稍后重试");
-        }
-
-        // 更新用户头像字段
-        String avatarUrl = "/uploads/avatars/" + filename;
+        // File IO is delegated to UploadService, which sanitises the filename (no path traversal)
+        // and enforces extension + MIME whitelists.
+        String avatarUrl = uploadService.uploadAvatar(file, user.getId());
         user.setAvatar(avatarUrl);
         userRepository.save(user);
 

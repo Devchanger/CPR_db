@@ -1,0 +1,86 @@
+package com.cpr_db.cpr_db.validation;
+
+import com.cpr_db.cpr_db.common.ApiResponse;
+import com.cpr_db.cpr_db.common.GlobalExceptionHandler;
+import com.cpr_db.cpr_db.dto.ScoreSubmitRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * P0-7 回归（确定性回退）：DTO 强类型 + @Valid 约束，且 GlobalExceptionHandler
+ * 将 MethodArgumentNotValidException 映射为 400。无需完整 Web 上下文。
+ */
+class DtoValidationTest {
+
+    private static ValidatorFactory factory;
+    private static Validator validator;
+    private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+    @BeforeAll
+    static void init() {
+        factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
+
+    @AfterAll
+    static void close() {
+        factory.close();
+    }
+
+    @Test
+    @DisplayName("P0-7 missing required fields violates @NotBlank/@NotNull constraints")
+    void missingFields_invalid() {
+        ScoreSubmitRequest req = new ScoreSubmitRequest();
+        Set<ConstraintViolation<ScoreSubmitRequest>> violations = validator.validate(req);
+        assertFalse(violations.isEmpty(), "empty request must fail validation");
+    }
+
+    @Test
+    @DisplayName("P0-7 out-of-range totalScore (250) violates @DecimalMax")
+    void outOfRange_invalid() {
+        ScoreSubmitRequest req = new ScoreSubmitRequest();
+        req.setScene("s");
+        req.setSkill("k");
+        req.setTotalScore(250f);
+        Set<ConstraintViolation<ScoreSubmitRequest>> violations = validator.validate(req);
+        assertFalse(violations.isEmpty(), "totalScore=250 must fail @DecimalMax(100)");
+    }
+
+    @Test
+    @DisplayName("P0-7 valid request passes validation")
+    void validRequest_ok() {
+        ScoreSubmitRequest req = new ScoreSubmitRequest();
+        req.setScene("s");
+        req.setSkill("k");
+        req.setTotalScore(85f);
+        req.setCompressionDepthAvg(5f);
+        req.setCompressionRateAvg(110f);
+        req.setErrorCount(0);
+        Set<ConstraintViolation<ScoreSubmitRequest>> violations = validator.validate(req);
+        assertTrue(violations.isEmpty(), "valid request should pass: " + violations);
+    }
+
+    @Test
+    @DisplayName("P0-7 GlobalExceptionHandler maps validation failure to HTTP 400")
+    void handler_returns400() {
+        BeanPropertyBindingResult br = new BeanPropertyBindingResult(new ScoreSubmitRequest(), "req");
+        br.addError(new FieldError("req", "scene", "scene is required"));
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, br);
+        ResponseEntity<ApiResponse<Void>> resp = handler.handleValidationException(ex);
+        assertEquals(400, resp.getStatusCode().value());
+    }
+}

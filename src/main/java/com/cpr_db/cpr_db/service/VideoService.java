@@ -1,7 +1,8 @@
 package com.cpr_db.cpr_db.service;
 
 import com.cpr_db.cpr_db.common.BusinessException;
-import com.cpr_db.cpr_db.dto.VideoResponse;
+import com.cpr_db.cpr_db.dto.VideoCreateRequest;
+import com.cpr_db.cpr_db.dto.VideoUpdateRequest;
 import com.cpr_db.cpr_db.entity.Skill;
 import com.cpr_db.cpr_db.entity.Video;
 import com.cpr_db.cpr_db.repository.SkillRepository;
@@ -10,14 +11,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class VideoService {
+
+    private static final int MAX_PAGE_SIZE = 100;
 
     private final VideoRepository videoRepository;
     private final SkillRepository skillRepository;
@@ -27,15 +34,16 @@ public class VideoService {
         this.skillRepository = skillRepository;
     }
 
-    public VideoResponse getVideo(String videoId) {
-        Video video = videoRepository.findByVideoId(videoId)
+    @Transactional(readOnly = true)
+    public Video getVideoEntity(String videoId) {
+        return videoRepository.findByVideoId(videoId)
                 .orElseThrow(() -> new BusinessException(404, "video not found"));
-        return new VideoResponse(video.getVideoId(), video.getUrl(), video.getDurationSeconds());
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Object> getVideoList(String keyword, Long skillId, String status, int page, int pageSize) {
-        if (page < 1) page = 1;
-        if (pageSize < 1) pageSize = 10;
+        page = clampPage(page);
+        pageSize = clampPageSize(pageSize);
         PageRequest pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Video> result;
         boolean hasKeyword = keyword != null && !keyword.isBlank();
@@ -60,80 +68,73 @@ public class VideoService {
         return toListMap(result);
     }
 
-    public Map<String, Object> createVideo(Map<String, Object> body) {
-        String title = body.get("title") == null ? null : body.get("title").toString().trim();
-        String url = body.get("url") == null ? null : body.get("url").toString().trim();
+    @Transactional
+    public Map<String, Object> createVideo(VideoCreateRequest req) {
+        String title = req.getTitle() == null ? null : req.getTitle().trim();
+        String url = req.getUrl() == null ? null : req.getUrl().trim();
         if (title == null || title.isBlank()) {
             throw new BusinessException(400, "title is required");
         }
         if (url == null || url.isBlank()) {
             throw new BusinessException(400, "url is required");
         }
+        if (req.getSkillId() != null && !skillRepository.existsById(req.getSkillId())) {
+            throw new BusinessException(400, "skill not found");
+        }
         Video video = new Video();
         video.setTitle(title);
         video.setUrl(url);
-        video.setVideoId("v" + System.currentTimeMillis());
-        if (body.containsKey("skill_id") && body.get("skill_id") != null) {
-            video.setSkillId(toLong(body.get("skill_id")));
-        }
-        if (body.containsKey("duration_seconds") && body.get("duration_seconds") != null) {
-            video.setDurationSeconds(toInt(body.get("duration_seconds")));
-        } else {
-            video.setDurationSeconds(0);
-        }
-        if (body.containsKey("status") && body.get("status") != null) {
-            video.setStatus(body.get("status").toString());
-        } else {
-            video.setStatus("published");
-        }
+        video.setSkillId(req.getSkillId());
+        video.setDurationSeconds(req.getDurationSeconds());
+        video.setStatus(req.getStatus() == null || req.getStatus().isBlank() ? "published" : req.getStatus());
         Video saved = videoRepository.save(video);
-        return toDetailMap(saved);
+        return toDetailMap(saved, resolveSkillNames(java.util.Set.of(saved.getSkillId())));
     }
 
-    public Map<String, Object> updateVideo(Long id, Map<String, Object> body) {
+    @Transactional
+    public Map<String, Object> updateVideo(Long id, VideoUpdateRequest req) {
         Video video = videoRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "video not found"));
-        if (body.containsKey("title") && body.get("title") != null) {
-            video.setTitle(body.get("title").toString().trim());
+        if (req.getTitle() != null) video.setTitle(req.getTitle().trim());
+        if (req.getUrl() != null) video.setUrl(req.getUrl().trim());
+        if (req.getSkillId() != null) {
+            if (req.getSkillId() != 0 && !skillRepository.existsById(req.getSkillId())) {
+                throw new BusinessException(400, "skill not found");
+            }
+            video.setSkillId(req.getSkillId());
         }
-        if (body.containsKey("url") && body.get("url") != null) {
-            video.setUrl(body.get("url").toString().trim());
+        if (req.getDurationSeconds() != null) {
+            video.setDurationSeconds(req.getDurationSeconds());
         }
-        if (body.containsKey("skill_id")) {
-            video.setSkillId(body.get("skill_id") == null ? null : toLong(body.get("skill_id")));
-        }
-        if (body.containsKey("duration_seconds")) {
-            video.setDurationSeconds(body.get("duration_seconds") == null ? null : toInt(body.get("duration_seconds")));
-        }
-        if (body.containsKey("status")) {
-            video.setStatus(body.get("status") == null ? null : body.get("status").toString());
-        }
+        if (req.getStatus() != null) video.setStatus(req.getStatus());
         Video saved = videoRepository.save(video);
-        return toDetailMap(saved);
+        return toDetailMap(saved, resolveSkillNames(java.util.Set.of(saved.getSkillId())));
     }
 
+    @Transactional
     public void deleteVideo(Long id) {
         Video video = videoRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "video not found"));
         videoRepository.delete(video);
     }
 
+    @Transactional
     public Map<String, Object> updateVideoStatus(Long id, String status) {
         Video video = videoRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "video not found"));
         video.setStatus(status);
         Video saved = videoRepository.save(video);
-        return toDetailMap(saved);
+        return toDetailMap(saved, resolveSkillNames(java.util.Set.of(saved.getSkillId())));
     }
 
-    private Map<String, Object> toDetailMap(Video video) {
+    private Map<String, Object> toDetailMap(Video video, Map<Long, String> skillNameMap) {
         Map<String, Object> map = new HashMap<>();
         map.put("id", video.getId());
         map.put("video_id", video.getVideoId());
         map.put("title", video.getTitle());
         map.put("url", video.getUrl());
         map.put("skill_id", video.getSkillId());
-        map.put("skill_name", resolveSkillName(video.getSkillId()));
+        map.put("skill_name", video.getSkillId() == null ? null : skillNameMap.get(video.getSkillId()));
         map.put("duration_seconds", video.getDurationSeconds());
         map.put("status", video.getStatus());
         map.put("created_at", video.getCreatedAt());
@@ -141,32 +142,38 @@ public class VideoService {
     }
 
     private Map<String, Object> toListMap(Page<Video> result) {
+        List<Video> videos = result.getContent();
+        Set<Long> skillIds = videos.stream().map(Video::getSkillId)
+                .filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, String> skillNameMap = resolveSkillNames(skillIds);
         List<Map<String, Object>> list = new ArrayList<>();
-        for (Video video : result.getContent()) {
-            list.add(toDetailMap(video));
+        for (Video video : videos) {
+            list.add(toDetailMap(video, skillNameMap));
         }
         Map<String, Object> map = new HashMap<>();
         map.put("list", list);
         map.put("total", result.getTotalElements());
+        map.put("page", result.getNumber() + 1);
+        map.put("page_size", result.getSize());
         return map;
     }
 
-    private String resolveSkillName(Long skillId) {
-        if (skillId == null) return null;
-        return skillRepository.findById(skillId)
-                .map(Skill::getName)
-                .orElse(null);
+    private Map<Long, String> resolveSkillNames(Set<Long> skillIds) {
+        Map<Long, String> map = new HashMap<>();
+        if (skillIds.isEmpty()) return map;
+        List<Skill> skills = skillRepository.findAllById(skillIds);
+        for (Skill s : skills) {
+            map.put(s.getId(), s.getName());
+        }
+        return map;
     }
 
-    private Long toLong(Object o) {
-        if (o == null) return null;
-        if (o instanceof Number) return ((Number) o).longValue();
-        return Long.parseLong(o.toString());
+    private int clampPage(int page) {
+        return page < 1 ? 1 : page;
     }
 
-    private Integer toInt(Object o) {
-        if (o == null) return null;
-        if (o instanceof Number) return ((Number) o).intValue();
-        return Integer.parseInt(o.toString());
+    private int clampPageSize(int pageSize) {
+        if (pageSize < 1) return 10;
+        return Math.min(pageSize, MAX_PAGE_SIZE);
     }
 }

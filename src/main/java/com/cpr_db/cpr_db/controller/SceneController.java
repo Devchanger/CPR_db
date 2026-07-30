@@ -1,8 +1,11 @@
 package com.cpr_db.cpr_db.controller;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
+import com.cpr_db.cpr_db.dto.SceneCreateRequest;
+import com.cpr_db.cpr_db.dto.SceneUpdateRequest;
 import com.cpr_db.cpr_db.entity.Scene;
 import com.cpr_db.cpr_db.service.SceneService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -40,14 +43,14 @@ public class SceneController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
-    public ResponseEntity<ApiResponse<Scene>> createScene(@RequestBody Scene body) {
-        return ResponseEntity.ok(ApiResponse.success(sceneService.createScene(body), "created"));
+    public ResponseEntity<ApiResponse<Scene>> createScene(@Valid @RequestBody SceneCreateRequest req) {
+        return ResponseEntity.ok(ApiResponse.success(sceneService.createScene(req), "created"));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
-    public ResponseEntity<ApiResponse<Scene>> updateScene(@PathVariable Long id, @RequestBody Scene body) {
-        return ResponseEntity.ok(ApiResponse.success(sceneService.updateScene(id, body), "updated"));
+    public ResponseEntity<ApiResponse<Scene>> updateScene(@PathVariable Long id, @Valid @RequestBody SceneUpdateRequest req) {
+        return ResponseEntity.ok(ApiResponse.success(sceneService.updateScene(id, req), "updated"));
     }
 
     @DeleteMapping("/{id}")

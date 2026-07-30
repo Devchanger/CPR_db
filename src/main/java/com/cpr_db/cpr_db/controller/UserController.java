@@ -1,18 +1,16 @@
 package com.cpr_db.cpr_db.controller;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
-import com.cpr_db.cpr_db.common.BusinessException;
 import com.cpr_db.cpr_db.dto.AdminCreateRequest;
 import com.cpr_db.cpr_db.dto.PasswordChangeRequest;
 import com.cpr_db.cpr_db.dto.UserInfoResponse;
 import com.cpr_db.cpr_db.entity.User;
-import com.cpr_db.cpr_db.repository.UserRepository;
 import com.cpr_db.cpr_db.service.AdminService;
+import com.cpr_db.cpr_db.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -21,23 +19,17 @@ import java.util.Map;
 @RequestMapping("/api/v1/user")
 public class UserController {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
     private final AdminService adminService;
 
-    public UserController(UserRepository userRepository,
-                          PasswordEncoder passwordEncoder,
-                          AdminService adminService) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+    public UserController(UserService userService, AdminService adminService) {
+        this.userService = userService;
         this.adminService = adminService;
     }
 
     @GetMapping("/info")
     public ResponseEntity<ApiResponse<UserInfoResponse>> getUserInfo(Authentication authentication) {
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException(404, "user not found"));
+        User user = userService.getUserByUsername(authentication.getName());
         UserInfoResponse info = new UserInfoResponse(
                 user.getId(), user.getUsername(), user.getRole(),
                 user.getRealName(), user.getAvatar(), user.getCreatedAt());
@@ -47,14 +39,8 @@ public class UserController {
     @PutMapping("/password")
     public ResponseEntity<ApiResponse<Void>> changePassword(Authentication authentication,
                                                             @Valid @RequestBody PasswordChangeRequest request) {
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException(404, "user not found"));
-        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
-            throw new BusinessException(400, "old password is incorrect");
-        }
-        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
+        User user = userService.getUserByUsername(authentication.getName());
+        userService.changePassword(user.getId(), request);
         return ResponseEntity.ok(ApiResponse.success(null, "password changed"));
     }
 
