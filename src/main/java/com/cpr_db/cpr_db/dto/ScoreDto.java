@@ -1,12 +1,16 @@
 package com.cpr_db.cpr_db.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 
 public class ScoreDto {
 
     private Long id;
     private String username;
+    @JsonProperty("scene_name")
     private String scene;
+    @JsonProperty("skill_name")
     private String skill;
     private Float totalScore;
     private Float compressionDepthAvg;
