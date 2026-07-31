@@ -3,8 +3,6 @@ package com.cpr_db.cpr_db.controller;
 import com.cpr_db.cpr_db.common.ApiResponse;
 import com.cpr_db.cpr_db.dto.ScoreDto;
 import com.cpr_db.cpr_db.dto.ScoreSubmitRequest;
-import com.cpr_db.cpr_db.entity.User;
-import com.cpr_db.cpr_db.repository.UserRepository;
 import com.cpr_db.cpr_db.service.ScoreService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -17,26 +15,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/scores")
 public class ScoreController {
 
     private final ScoreService scoreService;
-    private final UserRepository userRepository;
 
-    public ScoreController(ScoreService scoreService, UserRepository userRepository) {
+    public ScoreController(ScoreService scoreService) {
         this.scoreService = scoreService;
-        this.userRepository = userRepository;
     }
 
     @PostMapping
     public ResponseEntity<ApiResponse<ScoreDto>> submitScore(Authentication authentication,
                                                              @Valid @RequestBody ScoreSubmitRequest request) {
         String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("current user not found"));
-        ScoreDto saved = scoreService.saveScore(username, user.getId(), request);
+        ScoreDto saved = scoreService.saveScore(username, request);
         return ResponseEntity.ok(ApiResponse.success(saved));
     }
 
@@ -60,5 +55,12 @@ public class ScoreController {
         }
         ScoreDto latest = scoreService.getLatestScore(currentUsername);
         return ResponseEntity.ok(ApiResponse.success(latest));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getStats(Authentication authentication) {
+        String username = authentication.getName();
+        Map<String, Object> stats = scoreService.getUserStats(username);
+        return ResponseEntity.ok(ApiResponse.success(stats));
     }
 }
