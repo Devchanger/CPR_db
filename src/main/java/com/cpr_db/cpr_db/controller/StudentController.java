@@ -32,7 +32,7 @@ public class StudentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Student>> getStudentById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getStudentById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(studentService.getStudentById(id)));
     }
 

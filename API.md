@@ -434,6 +434,24 @@ GET /api/v1/students?keyword=&status=&page=1&pageSize=10
 GET /api/v1/students/{id}
 ```
 
+**响应**（单条与列表字段命名统一为 snake_case，前端按同一套 key 取数，勿混用 camelCase）：
+
+```json
+{
+  "id": 1,
+  "name": "张三",
+  "phone": "13800000000",
+  "email": "zhangsan@example.com",
+  "group_name": "A组",
+  "cert_status": "certified",
+  "trained_at": "2026-07-30T10:00:00",
+  "status": "active",
+  "created_at": "2026-07-30T09:00:00"
+}
+```
+
+> ⚠️ **字段命名一致性**：列表（`GET /students`）与单条详情（`GET /students/{id}`）均返回 snake_case 键（`group_name` / `cert_status` / `trained_at` / `created_at`）。后端**不存在** `username`、`real_name` 字段，学员姓名统一为 `name`。前端表格列与详情抽屉请绑定 `name`，不要再用 `username` / `real_name`。
+
 ### 9.3 创建学员 👑
 
 ```

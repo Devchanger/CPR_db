@@ -62,9 +62,10 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
-    public Student getStudentById(Long id) {
-        return studentRepository.findById(id)
+    public Map<String, Object> getStudentById(Long id) {
+        Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "student not found"));
+        return toDetailMap(student);
     }
 
     @Transactional
