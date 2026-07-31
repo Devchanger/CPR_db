@@ -213,6 +213,22 @@ GET /api/v1/videos/{videoId}
 
 `videoId` 为字符串（如 `video1` 或 `v1234567890`）。
 
+**响应**（播放地址字段为 `url`，**不是** `file_url`）：
+
+```json
+{
+  "id": 1,
+  "video_id": "v1234567890",
+  "title": "...",
+  "url": "https://...",
+  "skill_id": 1,
+  "skill_name": "...",
+  "duration_seconds": 120,
+  "status": "published",
+  "created_at": "2026-07-30T09:00:00"
+}
+```
+
 ### 5.3 创建视频 👑
 
 ```
@@ -249,6 +265,8 @@ PATCH /api/v1/videos/{id}/status
 
 ```
 GET /api/v1/skills?keyword=&status=&page=1&pageSize=10
+
+> ⚠️ 技能列表**仅支持 `keyword` / `status` 两个查询参数，没有 `scene_id` / `sceneId` 场景筛选参数**。前端若要做场景筛选，需改为客户端过滤，或推动后端新增场景筛选端点。
 ```
 
 ### 6.2 技能详情 🔐
@@ -304,6 +322,21 @@ GET /api/v1/steps/{id}
 ```
 
 > 🔐 仅需登录即可访问，任意已登录用户含 `student` 均可读取，非 admin 专属。
+
+**响应**（步骤标题字段为 `title`、**不是** `name`；排序字段为 `order`、**不是** `step_number`）：
+
+```json
+{
+  "id": 1,
+  "title": "...",
+  "description": "...",
+  "skill_id": 1,
+  "skill_name": "...",
+  "status": "published",
+  "order": 1,
+  "created_at": "2026-07-30T09:00:00"
+}
+```
 
 ### 7.3 创建步骤 👑
 
@@ -424,6 +457,8 @@ GET /api/v1/scores/stats
 
 ```
 GET /api/v1/students?keyword=&status=&page=1&pageSize=10
+
+> ⚠️ 学员列表搜索参数名为 `keyword`（按姓名/手机号模糊匹配），**不是 `username` 也不是 `name`**。前端搜索框可绑本地字段 `name`，但发请求时参数键必须是 `keyword: <姓名>`。
 ```
 
 **响应**: `{list: [...], total: N, page: 1, page_size: 10}`
