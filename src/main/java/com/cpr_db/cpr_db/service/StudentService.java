@@ -41,9 +41,9 @@ public class StudentService {
         boolean hasKeyword = keyword != null && !keyword.isBlank();
         boolean hasStatus = status != null && !status.isBlank();
         if (hasKeyword && hasStatus) {
-            result = studentRepository.findByNameContainingIgnoreCaseAndStatus(keyword, status, pageable);
+            result = studentRepository.findByKeywordOrPhoneAndStatus(keyword, keyword, status, pageable);
         } else if (hasKeyword) {
-            result = studentRepository.findByNameContainingIgnoreCase(keyword, pageable);
+            result = studentRepository.findByKeywordOrPhone(keyword, keyword, pageable);
         } else if (hasStatus) {
             result = studentRepository.findByStatus(status, pageable);
         } else {

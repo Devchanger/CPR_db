@@ -41,6 +41,12 @@ public class VideoService {
     }
 
     @Transactional(readOnly = true)
+    public Map<String, Object> getVideoDetail(String videoId) {
+        Video video = getVideoEntity(videoId);
+        return toDetailMap(video, resolveSkillNames(java.util.Set.of(video.getSkillId())));
+    }
+
+    @Transactional(readOnly = true)
     public Map<String, Object> getVideoList(String keyword, Long skillId, String status, int page, int pageSize) {
         page = clampPage(page);
         pageSize = clampPageSize(pageSize);

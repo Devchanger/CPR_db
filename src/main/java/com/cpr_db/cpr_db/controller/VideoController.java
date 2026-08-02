@@ -2,7 +2,6 @@ package com.cpr_db.cpr_db.controller;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
 import com.cpr_db.cpr_db.dto.VideoCreateRequest;
-import com.cpr_db.cpr_db.dto.VideoResponse;
 import com.cpr_db.cpr_db.dto.VideoUpdateRequest;
 import com.cpr_db.cpr_db.entity.Video;
 import com.cpr_db.cpr_db.service.VideoService;
@@ -24,10 +23,8 @@ public class VideoController {
     }
 
     @GetMapping("/{videoId}")
-    public ResponseEntity<ApiResponse<VideoResponse>> getVideo(@PathVariable String videoId) {
-        Video video = videoService.getVideoEntity(videoId);
-        VideoResponse response = new VideoResponse(video.getVideoId(), video.getUrl(), video.getDurationSeconds());
-        return ResponseEntity.ok(ApiResponse.success(response));
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getVideo(@PathVariable String videoId) {
+        return ResponseEntity.ok(ApiResponse.success(videoService.getVideoDetail(videoId)));
     }
 
     @GetMapping
