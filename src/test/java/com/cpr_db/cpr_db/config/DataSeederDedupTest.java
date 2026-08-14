@@ -86,6 +86,8 @@ class DataSeederDedupTest {
                 .filter(u -> "super_admin".equals(u.getRole()))
                 .count();
         assertEquals(1, superAdmins, "should seed exactly one super_admin (P0-8)");
+        assertTrue(cap.getAllValues().stream().allMatch(User::isMustChangePassword),
+                "all seed-created accounts must be flagged for forced password change (BE-B-06/D14)");
     }
 
     @Test

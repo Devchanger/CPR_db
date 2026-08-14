@@ -57,7 +57,8 @@ public class AuthService {
         }
         String token = jwtTokenUtil.generateToken(user.getUsername());
         logAuth("login", user.getId(), user.getUsername(), "logged in");
-        return new AuthResponse(token, jwtTokenUtil.getExpirationMs() + System.currentTimeMillis());
+        return new AuthResponse(token, jwtTokenUtil.getExpirationMs() + System.currentTimeMillis(),
+                user.isMustChangePassword());
     }
 
     // Non-blocking audit log: never let logging failure break the auth flow.

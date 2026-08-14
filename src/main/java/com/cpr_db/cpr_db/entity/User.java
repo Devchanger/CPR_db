@@ -45,6 +45,13 @@ public class User {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * D14: seed-created accounts must change the initial password on first login.
+     * Nullable column so ddl-auto=update can add it to existing user tables safely.
+     */
+    @Column(name = "must_change_password")
+    private Boolean mustChangePassword;
+
     public User() {
     }
 
@@ -95,4 +102,12 @@ public class User {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword != null && mustChangePassword;
+    }
+
+    public void setMustChangePassword(Boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
+    }
 }

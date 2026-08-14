@@ -77,6 +77,27 @@ class AuthServiceTest {
 
         assertNotNull(response);
         assertEquals("jwt.token.here", response.getToken());
+        assertFalse(response.isMustChangePassword());
+    }
+
+    @Test
+    void shouldReturnMustChangePasswordFlagForSeededAccount() {
+        AuthRequest request = new AuthRequest();
+        request.setUsername("admin");
+        request.setPassword("initialpass");
+
+        User user = new User();
+        user.setUsername("admin");
+        user.setPasswordHash("hashedPassword");
+        user.setMustChangePassword(true);
+
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("initialpass", "hashedPassword")).thenReturn(true);
+        when(jwtTokenUtil.generateToken("admin")).thenReturn("jwt.token.here");
+
+        AuthResponse response = authService.login(request);
+
+        assertTrue(response.isMustChangePassword(), "first login of a seed account must flag forced change");
     }
 
     @Test

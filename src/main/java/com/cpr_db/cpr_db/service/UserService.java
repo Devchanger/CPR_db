@@ -37,6 +37,7 @@ public class UserService {
             throw new BusinessException(400, PasswordPolicy.MESSAGE);
         }
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setMustChangePassword(false);
         userRepository.save(user);
     }
 }

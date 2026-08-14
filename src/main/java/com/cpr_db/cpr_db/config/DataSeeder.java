@@ -17,13 +17,20 @@ import com.cpr_db.cpr_db.repository.VideoRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String PASSWORD_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     private final VideoRepository videoRepository;
     private final SceneRepository sceneRepository;
@@ -167,26 +174,49 @@ public class DataSeeder implements CommandLineRunner {
               "常见问题", "CPR,成功,ROSC");
         }
 
-        String adminPass = System.getenv("CPR_ADMIN_PASSWORD");
-        if (adminPass == null || adminPass.isBlank()) adminPass = "CHANGE_ME";
+        String adminPass = seedPassword("CPR_ADMIN_PASSWORD", "admin");
         if (!userRepository.existsByUsername("admin")) {
             User admin = new User();
             admin.setUsername("admin");
             admin.setPasswordHash(passwordEncoder.encode(adminPass));
             admin.setRole("super_admin");
             admin.setRealName("超级管理员");
+            admin.setMustChangePassword(true);
             userRepository.save(admin);
         }
 
-        String testPass = System.getenv("CPR_TEST_PASSWORD");
-        if (testPass == null || testPass.isBlank()) testPass = "CHANGE_ME";
+        String testPass = seedPassword("CPR_TEST_PASSWORD", "testuser");
         if (!userRepository.existsByUsername("testuser")) {
             User testuser = new User();
             testuser.setUsername("testuser");
             testuser.setPasswordHash(passwordEncoder.encode(testPass));
             testuser.setRole("student");
+            testuser.setMustChangePassword(true);
             userRepository.save(testuser);
         }
+    }
+
+    /**
+     * D14: never fall back to a hard-coded default. Use the configured env value,
+     * or generate a random D5-compliant initial password (logged once; first login
+     * forces a password change).
+     */
+    private String seedPassword(String envName, String username) {
+        String password = System.getenv(envName);
+        if (password != null && !password.isBlank()) {
+            return password;
+        }
+        String generated = randomPassword();
+        log.warn("{} 未设置，已为 {} 生成随机初始密码 {}（首次登录将强制改密）", envName, username, generated);
+        return generated;
+    }
+
+    private String randomPassword() {
+        StringBuilder sb = new StringBuilder(12);
+        for (int i = 0; i < 12; i++) {
+            sb.append(PASSWORD_CHARS.charAt(RANDOM.nextInt(PASSWORD_CHARS.length())));
+        }
+        return sb.toString();
     }
 
     private Scene scene(String name, String desc, String type, String icon, int sortOrder) {
