@@ -75,6 +75,7 @@ public class SecurityConfig {
                                 "/api/v1/students/**",
                                 "/api/v1/user/info",
                                 "/api/v1/user/password",
+                                "/api/v1/notifications/**",
                                 "/api/v1/upload/image"
                         ).authenticated()
                         .anyRequest().authenticated()
