@@ -31,31 +31,31 @@ class AdminServiceGuardTest {
     }
 
     @Test
-    @DisplayName("P0-10 deleting the last super_admin is rejected with 409")
-    void deleteLastSuperAdmin_rejected() {
+    @DisplayName("BE-B-01 deleting the last admin is rejected with 409")
+    void deleteLastAdmin_rejected() {
         User victim = new User();
         victim.setId(1L);
         victim.setUsername("victim");
-        victim.setRole("super_admin");
+        victim.setRole("admin");
         when(userRepository.findById(1L)).thenReturn(Optional.of(victim));
-        when(userRepository.countByRole("super_admin")).thenReturn(1L);
+        when(userRepository.countByRole("admin")).thenReturn(1L);
 
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> adminService.deleteUser(1L, "otherAdmin"));
-        assertEquals(409, ex.getCode(), "last super_admin delete must be rejected");
-        assertTrue(ex.getMessage().toLowerCase().contains("super admin"), ex.getMessage());
+        assertEquals(409, ex.getCode(), "last admin delete must be rejected");
+        assertTrue(ex.getMessage().toLowerCase().contains("last admin"), ex.getMessage());
         verify(userRepository, never()).delete(any());
     }
 
     @Test
-    @DisplayName("P0-10 deleting a super_admin is allowed when more than one remains")
-    void deleteWhenMultipleSuperAdmins_allowed() {
+    @DisplayName("BE-B-01 deleting an admin is allowed when more than one remains")
+    void deleteWhenMultipleAdmins_allowed() {
         User victim = new User();
         victim.setId(1L);
         victim.setUsername("victim");
-        victim.setRole("super_admin");
+        victim.setRole("admin");
         when(userRepository.findById(1L)).thenReturn(Optional.of(victim));
-        when(userRepository.countByRole("super_admin")).thenReturn(2L);
+        when(userRepository.countByRole("admin")).thenReturn(2L);
 
         assertDoesNotThrow(() -> adminService.deleteUser(1L, "otherAdmin"));
         verify(userRepository).delete(victim);

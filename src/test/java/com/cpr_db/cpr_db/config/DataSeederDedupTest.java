@@ -75,17 +75,17 @@ class DataSeederDedupTest {
     }
 
     @Test
-    @DisplayName("P0-8 exactly one super_admin seed account created on first run")
-    void superAdminSeed_unique() {
+    @DisplayName("P0-8/BE-B-01 exactly one admin seed account created on first run")
+    void adminSeed_unique() {
         stubEmptyDb();
         dataSeeder.run();
 
         ArgumentCaptor<User> cap = ArgumentCaptor.forClass(User.class);
         verify(userRepository, atLeastOnce()).save(cap.capture());
-        long superAdmins = cap.getAllValues().stream()
-                .filter(u -> "super_admin".equals(u.getRole()))
+        long admins = cap.getAllValues().stream()
+                .filter(u -> "admin".equals(u.getRole()))
                 .count();
-        assertEquals(1, superAdmins, "should seed exactly one super_admin (P0-8)");
+        assertEquals(1, admins, "should seed exactly one admin (P0-8/BE-B-01)");
         assertTrue(cap.getAllValues().stream().allMatch(User::isMustChangePassword),
                 "all seed-created accounts must be flagged for forced password change (BE-B-06/D14)");
     }

@@ -36,27 +36,27 @@ public class SkillController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> createSkill(@Valid @RequestBody SkillCreateRequest request) {
         return ResponseEntity.ok(ApiResponse.success(skillService.createSkill(request), "created"));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateSkill(@PathVariable Long id,
                                                                        @Valid @RequestBody SkillUpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.success(skillService.updateSkill(id, request), "updated"));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Void>> deleteSkill(@PathVariable Long id) {
         skillService.deleteSkill(id);
         return ResponseEntity.ok(ApiResponse.success(null, "deleted"));
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateStatus(@PathVariable Long id,
                                                                          @RequestBody Map<String, Object> body) {
         String status = body.get("status") == null ? null : body.get("status").toString();

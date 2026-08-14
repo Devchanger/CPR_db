@@ -24,7 +24,7 @@ import java.util.Set;
 public class AdminService {
 
     private static final int MAX_PAGE_SIZE = 100;
-    private static final Set<String> ADMIN_ROLES = Set.of("admin", "super_admin");
+    private static final Set<String> ADMIN_ROLES = Set.of("admin");
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -65,8 +65,8 @@ public class AdminService {
             throw new BusinessException(409, "username already exists");
         }
         String role = request.getRole();
-        if (!"admin".equals(role) && !"super_admin".equals(role)) {
-            throw new BusinessException(400, "role must be admin or super_admin");
+        if (!"admin".equals(role)) {
+            throw new BusinessException(400, "role must be admin");
         }
         User user = new User();
         user.setUsername(request.getUsername());
@@ -82,8 +82,8 @@ public class AdminService {
     public Map<String, Object> updateRole(Long id, String role) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "user not found"));
-        if (!"admin".equals(role) && !"super_admin".equals(role) && !"student".equals(role)) {
-            throw new BusinessException(400, "role must be admin, super_admin or student");
+        if (!"admin".equals(role) && !"student".equals(role)) {
+            throw new BusinessException(400, "role must be admin or student");
         }
         user.setRole(role);
         User saved = userRepository.save(user);
@@ -98,10 +98,10 @@ public class AdminService {
         if (user.getUsername().equals(currentUsername)) {
             throw new BusinessException(400, "cannot delete current user");
         }
-        // Guard: never delete the last remaining super admin (review P0-10).
-        if ("super_admin".equals(user.getRole())
-                && userRepository.countByRole("super_admin") <= 1) {
-            throw new BusinessException(409, "cannot delete the last super admin");
+        // Guard: never delete the last remaining admin (BE-B-01, former P0-10 guard).
+        if ("admin".equals(user.getRole())
+                && userRepository.countByRole("admin") <= 1) {
+            throw new BusinessException(409, "cannot delete the last admin");
         }
         userRepository.delete(user);
         logChange("delete_user", id, "deleted user id=" + id + " username=" + user.getUsername());

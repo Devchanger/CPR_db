@@ -45,7 +45,7 @@ public class UserController {
     }
 
     @GetMapping("/admins")
-    @PreAuthorize("hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAdminList(
             @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "page", defaultValue = "1") int page,
@@ -54,13 +54,13 @@ public class UserController {
     }
 
     @PostMapping("/admins")
-    @PreAuthorize("hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> createAdmin(@Valid @RequestBody AdminCreateRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminService.createAdmin(request), "created"));
     }
 
     @PutMapping("/{id}/role")
-    @PreAuthorize("hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateRole(@PathVariable Long id,
                                                                        @RequestBody Map<String, Object> body) {
         String role = body.get("role") == null ? null : body.get("role").toString();
@@ -68,7 +68,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id, Authentication authentication) {
         adminService.deleteUser(id, authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(null, "deleted"));

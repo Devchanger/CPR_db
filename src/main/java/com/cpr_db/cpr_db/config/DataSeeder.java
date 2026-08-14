@@ -179,7 +179,7 @@ public class DataSeeder implements CommandLineRunner {
             User admin = new User();
             admin.setUsername("admin");
             admin.setPasswordHash(passwordEncoder.encode(adminPass));
-            admin.setRole("super_admin");
+            admin.setRole("admin");
             admin.setRealName("超级管理员");
             admin.setMustChangePassword(true);
             userRepository.save(admin);
@@ -194,6 +194,9 @@ public class DataSeeder implements CommandLineRunner {
             testuser.setMustChangePassword(true);
             userRepository.save(testuser);
         }
+
+        // BE-B-01: converge any legacy super_admin rows to admin (idempotent).
+        userRepository.convergeSuperAdminToAdmin();
     }
 
     /**

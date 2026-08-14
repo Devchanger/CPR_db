@@ -42,26 +42,26 @@ public class SceneController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Scene>> createScene(@Valid @RequestBody SceneCreateRequest req) {
         return ResponseEntity.ok(ApiResponse.success(sceneService.createScene(req), "created"));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Scene>> updateScene(@PathVariable Long id, @Valid @RequestBody SceneUpdateRequest req) {
         return ResponseEntity.ok(ApiResponse.success(sceneService.updateScene(id, req), "updated"));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Void>> deleteScene(@PathVariable Long id) {
         sceneService.deleteScene(id);
         return ResponseEntity.ok(ApiResponse.success(null, "deleted"));
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Scene>> updateStatus(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         String status = body.get("status") == null ? null : body.get("status").toString();
         return ResponseEntity.ok(ApiResponse.success(sceneService.updateSceneStatus(id, status), "updated"));
