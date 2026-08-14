@@ -59,11 +59,11 @@ public class StudentService {
         if (hasKeyword && hasStatus) {
             result = studentRepository.findByNameContainingIgnoreCaseAndStatus(keyword, status, pageable);
         } else if (hasKeyword) {
-            result = studentRepository.findByNameContainingIgnoreCase(keyword, pageable);
+            result = studentRepository.findByNameContainingIgnoreCaseAndStatusNot(keyword, "archived", pageable);
         } else if (hasStatus) {
             result = studentRepository.findByStatus(status, pageable);
         } else {
-            result = studentRepository.findAll(pageable);
+            result = studentRepository.findByStatusNot("archived", pageable);
         }
         List<Map<String, Object>> list = new ArrayList<>();
         for (Student student : result.getContent()) {
@@ -183,7 +183,9 @@ public class StudentService {
     public void deleteStudent(Long id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "student not found"));
-        studentRepository.delete(student);
+        // BE-B-04: soft delete — archived keeps scores/stats and is excluded from default lists.
+        student.setStatus("archived");
+        studentRepository.save(student);
     }
 
     @Transactional

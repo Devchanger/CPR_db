@@ -11,5 +11,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     Page<Student> findByNameContainingIgnoreCase(String name, Pageable pageable);
     Page<Student> findByStatus(String status, Pageable pageable);
     Page<Student> findByNameContainingIgnoreCaseAndStatus(String name, String status, Pageable pageable);
+    Page<Student> findByStatusNot(String status, Pageable pageable);
+    Page<Student> findByNameContainingIgnoreCaseAndStatusNot(String name, String status, Pageable pageable);
     Optional<Student> findByUsername(String username);
 }

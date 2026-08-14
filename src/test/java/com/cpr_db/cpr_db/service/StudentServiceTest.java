@@ -7,6 +7,10 @@ import com.cpr_db.cpr_db.entity.User;
 import com.cpr_db.cpr_db.repository.ScoreRepository;
 import com.cpr_db.cpr_db.repository.StudentRepository;
 import com.cpr_db.cpr_db.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -165,5 +169,44 @@ class StudentServiceTest {
         assertEquals("zhangsan", detail.get("username"));
         assertEquals(5L, detail.get("training_count"));
         assertEquals(82.5, detail.get("average_score"));
+    }
+
+    @Test
+    void deleteStudent_softArchivesInsteadOfPhysicalDelete() {
+        Student student = new Student();
+        student.setId(1L);
+        student.setName("张三");
+        student.setStatus("active");
+        when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
+        when(studentRepository.save(any(Student.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        studentService.deleteStudent(1L);
+
+        assertEquals("archived", student.getStatus());
+        verify(studentRepository).save(student);
+        verify(studentRepository, never()).delete(any(Student.class));
+    }
+
+    @Test
+    void getStudentList_excludesArchivedByDefault() {
+        Page<Student> page = new PageImpl<>(java.util.List.of(), PageRequest.of(0, 10), 0);
+        when(studentRepository.findByStatusNot(eq("archived"), any(Pageable.class))).thenReturn(page);
+
+        studentService.getStudentList(null, null, 1, 10);
+
+        verify(studentRepository).findByStatusNot(eq("archived"), any(Pageable.class));
+        verify(studentRepository, never()).findAll(any(Pageable.class));
+    }
+
+    @Test
+    void getStudentList_keywordOnly_excludesArchived() {
+        Page<Student> page = new PageImpl<>(java.util.List.of(), PageRequest.of(0, 10), 0);
+        when(studentRepository.findByNameContainingIgnoreCaseAndStatusNot(eq("张"), eq("archived"), any(Pageable.class)))
+                .thenReturn(page);
+
+        studentService.getStudentList("张", null, 1, 10);
+
+        verify(studentRepository)
+                .findByNameContainingIgnoreCaseAndStatusNot(eq("张"), eq("archived"), any(Pageable.class));
     }
 }
