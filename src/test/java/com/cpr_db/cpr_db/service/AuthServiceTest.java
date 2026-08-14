@@ -6,6 +6,7 @@ import com.cpr_db.cpr_db.dto.RegisterRequest;
 import com.cpr_db.cpr_db.entity.User;
 import com.cpr_db.cpr_db.repository.UserRepository;
 import com.cpr_db.cpr_db.security.JwtTokenUtil;
+import com.cpr_db.cpr_db.service.LogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,7 @@ class AuthServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtTokenUtil jwtTokenUtil;
+    @Mock private LogService logService;
 
     @InjectMocks
     private AuthService authService;
@@ -44,6 +46,10 @@ class AuthServiceTest {
         when(userRepository.existsByUsername("newuser")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("hashedPassword");
         when(jwtTokenUtil.generateToken("newuser")).thenReturn("jwt.token.here");
+        User savedUser = new User();
+        savedUser.setId(1L);
+        savedUser.setUsername("newuser");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
         AuthResponse response = authService.register(request);
 

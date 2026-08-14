@@ -1,0 +1,4 @@
+CREATE DATABASE IF NOT EXISTS cpr_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'cpr_user'@'localhost' IDENTIFIED BY 'CHANGE_ME';
+GRANT ALL PRIVILEGES ON cpr_db.* TO 'cpr_user'@'localhost';
+FLUSH PRIVILEGES;

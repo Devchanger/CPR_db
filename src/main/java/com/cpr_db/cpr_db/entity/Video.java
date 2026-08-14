@@ -5,7 +5,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "videos")
@@ -21,8 +24,21 @@ public class Video {
     @Column(nullable = false)
     private String url;
 
-    @Column(nullable = false)
+    // Nullable: unknown video duration is stored as null instead of a hard-coded 0 (review P2-2).
+    @Column
     private Integer durationSeconds;
+
+    @Column(nullable = false, length = 200)
+    private String title;
+
+    @Column(name = "skill_id")
+    private Long skillId;
+
+    @Column(length = 20)
+    private String status;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
     public Video() {
     }
@@ -31,6 +47,13 @@ public class Video {
         this.videoId = videoId;
         this.url = url;
         this.durationSeconds = durationSeconds;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (status == null) status = "published";
+        if (videoId == null) videoId = "v" + System.currentTimeMillis();
     }
 
     public Long getId() {
@@ -63,5 +86,37 @@ public class Video {
 
     public void setDurationSeconds(Integer durationSeconds) {
         this.durationSeconds = durationSeconds;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public Long getSkillId() {
+        return skillId;
+    }
+
+    public void setSkillId(Long skillId) {
+        this.skillId = skillId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }
