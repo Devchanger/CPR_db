@@ -28,14 +28,6 @@ public class SceneController {
         return ResponseEntity.ok(ApiResponse.success(sceneService.getAll()));
     }
 
-    @GetMapping("/list")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getSceneList(
-            @RequestParam(name = "keyword", required = false) String keyword,
-            @RequestParam(name = "page", defaultValue = "1") int page,
-            @RequestParam(name = "pageSize", defaultValue = "10") int pageSize) {
-        return ResponseEntity.ok(ApiResponse.success(sceneService.getSceneList(keyword, page, pageSize)));
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Scene>> getSceneById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(sceneService.getSceneById(id)));

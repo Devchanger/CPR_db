@@ -118,15 +118,6 @@ public class VideoService {
         videoRepository.delete(video);
     }
 
-    @Transactional
-    public Map<String, Object> updateVideoStatus(Long id, String status) {
-        Video video = videoRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(404, "video not found"));
-        video.setStatus(status);
-        Video saved = videoRepository.save(video);
-        return toDetailMap(saved, resolveSkillNames(java.util.Set.of(saved.getSkillId())));
-    }
-
     private Map<String, Object> toDetailMap(Video video, Map<Long, String> skillNameMap) {
         Map<String, Object> map = new HashMap<>();
         map.put("id", video.getId());

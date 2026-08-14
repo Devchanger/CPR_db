@@ -6,7 +6,6 @@ import com.cpr_db.cpr_db.controller.UserController;
 import com.cpr_db.cpr_db.service.ScoreService;
 import com.cpr_db.cpr_db.service.UploadService;
 import com.cpr_db.cpr_db.service.UserService;
-import com.cpr_db.cpr_db.service.AdminService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.repository.Repository;
@@ -64,7 +63,8 @@ class ControllerLayeringTest {
                     "UserController must not hold PasswordEncoder (move to UserService): " + f.getType());
         }
         assertTrue(hasFieldOfType(UserController.class, UserService.class), "missing UserService field");
-        assertTrue(hasFieldOfType(UserController.class, AdminService.class), "missing AdminService field");
+        assertEquals(1, UserController.class.getDeclaredFields().length,
+                "BE-B-05: UserController should only hold UserService after admin-management endpoints are removed");
     }
 
     private boolean hasFieldOfType(Class<?> c, Class<?> type) {

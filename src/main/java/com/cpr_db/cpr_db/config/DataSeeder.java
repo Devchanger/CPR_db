@@ -18,6 +18,7 @@ import com.cpr_db.cpr_db.service.StudentService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +65,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
         if (videoRepository.count() == 0) {
             Video v1 = new Video("video1", "https://example.com/videos/video1.mp4", 120);

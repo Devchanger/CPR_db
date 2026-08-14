@@ -60,11 +60,4 @@ public class VideoController {
         return ResponseEntity.ok(ApiResponse.success(null, "deleted"));
     }
 
-    @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('admin')")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> updateStatus(@PathVariable Long id,
-                                                                         @RequestBody Map<String, Object> body) {
-        String status = body.get("status") == null ? null : body.get("status").toString();
-        return ResponseEntity.ok(ApiResponse.success(videoService.updateVideoStatus(id, status), "updated"));
-    }
 }

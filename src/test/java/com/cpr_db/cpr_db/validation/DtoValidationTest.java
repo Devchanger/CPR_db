@@ -2,7 +2,6 @@ package com.cpr_db.cpr_db.validation;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
 import com.cpr_db.cpr_db.common.GlobalExceptionHandler;
-import com.cpr_db.cpr_db.dto.AdminCreateRequest;
 import com.cpr_db.cpr_db.dto.PasswordChangeRequest;
 import com.cpr_db.cpr_db.dto.RegisterRequest;
 import com.cpr_db.cpr_db.dto.ScoreSubmitRequest;
@@ -121,13 +120,4 @@ class DtoValidationTest {
         assertTrue(validator.validate(valid).isEmpty(), "valid newPassword should pass");
     }
 
-    @Test
-    @DisplayName("BE-B-02 admin-creation password must satisfy D5 pattern")
-    void adminCreatePassword_policy() {
-        AdminCreateRequest weak = new AdminCreateRequest();
-        weak.setUsername("manager");
-        weak.setPassword("a1!");
-        weak.setRole("admin");
-        assertFalse(validator.validate(weak).isEmpty(), "weak admin password must fail D5");
-    }
 }
