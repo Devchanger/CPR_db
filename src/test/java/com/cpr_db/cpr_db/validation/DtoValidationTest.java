@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.Set;
 
@@ -83,6 +85,26 @@ class DtoValidationTest {
         br.addError(new FieldError("req", "scene", "scene is required"));
         MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, br);
         ResponseEntity<ApiResponse<Void>> resp = handler.handleValidationException(ex);
+        assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
+    @DisplayName("QA-B-01 unmapped routes map to 404 (deleted endpoints must not 500)")
+    void handler_unmappedRoute_returns404() {
+        NoHandlerFoundException ex = new NoHandlerFoundException("GET", "/api/v1/user/admins", null);
+
+        ResponseEntity<ApiResponse<Void>> resp = handler.handleNoHandlerFound(ex);
+
+        assertEquals(404, resp.getStatusCode().value());
+    }
+
+    @Test
+    @DisplayName("QA-B-01 path type mismatch maps to 400 (scenes/list must not 500)")
+    void handler_typeMismatch_returns400() {
+        MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException("list", Long.class, "list", null, null);
+
+        ResponseEntity<ApiResponse<Void>> resp = handler.handleTypeMismatch(ex);
+
         assertEquals(400, resp.getStatusCode().value());
     }
 
