@@ -83,6 +83,10 @@ public class DataSeeder implements CommandLineRunner {
             sceneRepository.save(scene("AED 使用", "自动体外除颤器 (AED) 操作训练场景", "basic", "zap", 3));
             sceneRepository.save(scene("气道异物梗阻", "海姆立克急救法训练场景", "advanced", "alert", 4));
             sceneRepository.save(scene("综合考核", "包含所有急救技能的综合考核场景", "advanced", "star", 5));
+            // BE-C-03: VR-aligned canonical scene names (Subway_Terminal/Hospital_Corridor -> 地铁站/医院走廊).
+            sceneRepository.save(scene("地铁站", "地铁站场景的 CPR 训练（VR: Subway_Terminal）", "vr", "train", 6));
+            sceneRepository.save(scene("医院走廊", "医院走廊场景的 CPR 训练（VR: Hospital_Corridor）", "vr", "hospital", 7));
+            sceneRepository.save(scene("废墟", "废墟场景的 CPR 训练（VR: Ruins）", "vr", "ruins", 8));
         }
         for (Scene s : sceneRepository.findAllByOrderBySortOrderAsc()) {
             sceneIds.put(s.getName(), s.getId());
