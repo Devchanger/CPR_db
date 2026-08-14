@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class VideoService {
 
     private static final int MAX_PAGE_SIZE = 100;
+    private static final Set<String> VALID_STATUSES = Set.of("active", "offline");
 
     private final VideoRepository videoRepository;
     private final SkillRepository skillRepository;
@@ -86,9 +87,9 @@ public class VideoService {
         video.setUrl(url);
         video.setSkillId(req.getSkillId());
         video.setDurationSeconds(req.getDurationSeconds());
-        video.setStatus(req.getStatus() == null || req.getStatus().isBlank() ? "published" : req.getStatus());
+        video.setStatus(req.getStatus() == null || req.getStatus().isBlank() ? "active" : validateStatus(req.getStatus()));
         Video saved = videoRepository.save(video);
-        return toDetailMap(saved, resolveSkillNames(java.util.Set.of(saved.getSkillId())));
+        return toDetailMap(saved, resolveSkillNames(singletonSkillSet(saved.getSkillId())));
     }
 
     @Transactional
@@ -106,9 +107,9 @@ public class VideoService {
         if (req.getDurationSeconds() != null) {
             video.setDurationSeconds(req.getDurationSeconds());
         }
-        if (req.getStatus() != null) video.setStatus(req.getStatus());
+        if (req.getStatus() != null) video.setStatus(validateStatus(req.getStatus()));
         Video saved = videoRepository.save(video);
-        return toDetailMap(saved, resolveSkillNames(java.util.Set.of(saved.getSkillId())));
+        return toDetailMap(saved, resolveSkillNames(singletonSkillSet(saved.getSkillId())));
     }
 
     @Transactional
@@ -157,6 +158,17 @@ public class VideoService {
             map.put(s.getId(), s.getName());
         }
         return map;
+    }
+
+    private Set<Long> singletonSkillSet(Long skillId) {
+        return skillId == null ? Set.of() : Set.of(skillId);
+    }
+
+    private String validateStatus(String status) {
+        if (!VALID_STATUSES.contains(status)) {
+            throw new BusinessException(400, "status must be active or offline");
+        }
+        return status;
     }
 
     private int clampPage(int page) {

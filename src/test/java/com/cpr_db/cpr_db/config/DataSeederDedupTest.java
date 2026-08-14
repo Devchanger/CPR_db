@@ -145,4 +145,16 @@ class DataSeederDedupTest {
         assertTrue(linked.isMustChangePassword(), "linked account must force password change");
         assertEquals("zhangsan", zhangsan.getUsername(), "student row must carry the mapping key");
     }
+
+    @Test
+    @DisplayName("BE-C-04 seeded videos default to active vocabulary")
+    void videoSeeds_statusActive() {
+        stubEmptyDb();
+        dataSeeder.run();
+
+        ArgumentCaptor<Video> cap = ArgumentCaptor.forClass(Video.class);
+        verify(videoRepository, atLeastOnce()).save(cap.capture());
+        assertTrue(cap.getAllValues().stream().allMatch(v -> "active".equals(v.getStatus())),
+                "all seeded videos must use the unified active status");
+    }
 }

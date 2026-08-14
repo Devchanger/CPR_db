@@ -4,6 +4,8 @@ import com.cpr_db.cpr_db.entity.Video;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.Optional;
 
@@ -18,4 +20,11 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
     Page<Video> findByTitleContainingIgnoreCaseAndStatus(String title, String status, Pageable pageable);
     Page<Video> findBySkillIdAndStatus(Long skillId, String status, Pageable pageable);
     Page<Video> findByTitleContainingIgnoreCaseAndSkillIdAndStatus(String title, Long skillId, String status, Pageable pageable);
+
+    /**
+     * BE-C-04: converge legacy 'published' rows to the unified 'active' vocabulary.
+     */
+    @Modifying
+    @Query("update Video v set v.status = 'active' where v.status = 'published'")
+    int convergePublishedToActive();
 }

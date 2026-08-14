@@ -70,11 +70,15 @@ public class DataSeeder implements CommandLineRunner {
         if (videoRepository.count() == 0) {
             Video v1 = new Video("video1", "https://example.com/videos/video1.mp4", 120);
             v1.setTitle("CPR Demo Video 1");
+            v1.setStatus("active");
             videoRepository.save(v1);
             Video v2 = new Video("video2", "https://example.com/videos/video2.mp4", 180);
             v2.setTitle("CPR Demo Video 2");
+            v2.setStatus("active");
             videoRepository.save(v2);
         }
+        // BE-C-04: legacy 'published' rows converge to the unified 'active' vocabulary.
+        videoRepository.convergePublishedToActive();
 
         Map<String, Long> sceneIds = new HashMap<>();
         if (sceneRepository.count() == 0) {
