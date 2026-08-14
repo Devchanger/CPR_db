@@ -3,6 +3,7 @@ package com.cpr_db.cpr_db.service;
 import com.cpr_db.cpr_db.dto.AuthRequest;
 import com.cpr_db.cpr_db.dto.AuthResponse;
 import com.cpr_db.cpr_db.dto.RegisterRequest;
+import com.cpr_db.cpr_db.common.BusinessException;
 import com.cpr_db.cpr_db.entity.User;
 import com.cpr_db.cpr_db.repository.UserRepository;
 import com.cpr_db.cpr_db.security.JwtTokenUtil;
@@ -34,7 +35,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(jwtTokenUtil.getExpirationMs()).thenReturn(3600000L);
+        lenient().when(jwtTokenUtil.getExpirationMs()).thenReturn(3600000L);
     }
 
     @Test
@@ -76,5 +77,16 @@ class AuthServiceTest {
 
         assertNotNull(response);
         assertEquals("jwt.token.here", response.getToken());
+    }
+
+    @Test
+    void shouldRejectRegisterWhenPasswordViolatesPolicy() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("newuser");
+        request.setPassword("short");
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> authService.register(request));
+        assertEquals(400, ex.getCode());
+        verify(userRepository, never()).save(any(User.class));
     }
 }

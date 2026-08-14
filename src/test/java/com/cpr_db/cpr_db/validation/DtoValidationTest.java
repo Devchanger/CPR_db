@@ -2,6 +2,9 @@ package com.cpr_db.cpr_db.validation;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
 import com.cpr_db.cpr_db.common.GlobalExceptionHandler;
+import com.cpr_db.cpr_db.dto.AdminCreateRequest;
+import com.cpr_db.cpr_db.dto.PasswordChangeRequest;
+import com.cpr_db.cpr_db.dto.RegisterRequest;
 import com.cpr_db.cpr_db.dto.ScoreSubmitRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -82,5 +85,49 @@ class DtoValidationTest {
         MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, br);
         ResponseEntity<ApiResponse<Void>> resp = handler.handleValidationException(ex);
         assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
+    @DisplayName("BE-B-02 register password must satisfy D5 pattern")
+    void registerPassword_policy() {
+        RegisterRequest shortPwd = new RegisterRequest();
+        shortPwd.setUsername("u1");
+        shortPwd.setPassword("abc");
+        assertFalse(validator.validate(shortPwd).isEmpty(), "short password must fail D5");
+
+        RegisterRequest badChars = new RegisterRequest();
+        badChars.setUsername("u1");
+        badChars.setPassword("abcdef!");
+        assertFalse(validator.validate(badChars).isEmpty(), "password with special chars must fail D5");
+
+        RegisterRequest valid = new RegisterRequest();
+        valid.setUsername("u1");
+        valid.setPassword("abcdef12");
+        assertTrue(validator.validate(valid).isEmpty(), "valid alphanumeric password should pass: "
+                + validator.validate(valid));
+    }
+
+    @Test
+    @DisplayName("BE-B-02 change-password newPassword must satisfy D5 pattern")
+    void changePassword_policy() {
+        PasswordChangeRequest shortPwd = new PasswordChangeRequest();
+        shortPwd.setOldPassword("oldpass");
+        shortPwd.setNewPassword("12345");
+        assertFalse(validator.validate(shortPwd).isEmpty(), "short newPassword must fail D5");
+
+        PasswordChangeRequest valid = new PasswordChangeRequest();
+        valid.setOldPassword("oldpass");
+        valid.setNewPassword("abcdef12");
+        assertTrue(validator.validate(valid).isEmpty(), "valid newPassword should pass");
+    }
+
+    @Test
+    @DisplayName("BE-B-02 admin-creation password must satisfy D5 pattern")
+    void adminCreatePassword_policy() {
+        AdminCreateRequest weak = new AdminCreateRequest();
+        weak.setUsername("manager");
+        weak.setPassword("a1!");
+        weak.setRole("admin");
+        assertFalse(validator.validate(weak).isEmpty(), "weak admin password must fail D5");
     }
 }

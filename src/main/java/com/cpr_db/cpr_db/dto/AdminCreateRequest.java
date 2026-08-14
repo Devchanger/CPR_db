@@ -1,6 +1,8 @@
 package com.cpr_db.cpr_db.dto;
 
+import com.cpr_db.cpr_db.common.PasswordPolicy;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 public class AdminCreateRequest {
 
@@ -8,6 +10,7 @@ public class AdminCreateRequest {
     private String username;
 
     @NotBlank(message = "password is required")
+    @Pattern(regexp = PasswordPolicy.REGEX, message = PasswordPolicy.MESSAGE)
     private String password;
 
     @NotBlank(message = "role is required")
