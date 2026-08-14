@@ -14,6 +14,7 @@ import com.cpr_db.cpr_db.repository.StepRepository;
 import com.cpr_db.cpr_db.repository.StudentRepository;
 import com.cpr_db.cpr_db.repository.UserRepository;
 import com.cpr_db.cpr_db.repository.VideoRepository;
+import com.cpr_db.cpr_db.service.StudentService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,7 @@ public class DataSeeder implements CommandLineRunner {
     private final KnowledgeRepository knowledgeRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StudentService studentService;
 
     public DataSeeder(VideoRepository videoRepository,
                       SceneRepository sceneRepository,
@@ -48,7 +50,8 @@ public class DataSeeder implements CommandLineRunner {
                       StudentRepository studentRepository,
                       KnowledgeRepository knowledgeRepository,
                       UserRepository userRepository,
-                      PasswordEncoder passwordEncoder) {
+                      PasswordEncoder passwordEncoder,
+                      StudentService studentService) {
         this.videoRepository = videoRepository;
         this.sceneRepository = sceneRepository;
         this.skillRepository = skillRepository;
@@ -57,6 +60,7 @@ public class DataSeeder implements CommandLineRunner {
         this.knowledgeRepository = knowledgeRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.studentService = studentService;
     }
 
     @Override
@@ -197,6 +201,9 @@ public class DataSeeder implements CommandLineRunner {
 
         // BE-B-01: converge any legacy super_admin rows to admin (idempotent).
         userRepository.convergeSuperAdminToAdmin();
+
+        // DM-B-01: existing student rows get a linked pinyin account (张三 -> zhangsan, 李四 -> lisi11), idempotent.
+        studentRepository.findAll().forEach(studentService::ensureAccount);
     }
 
     /**

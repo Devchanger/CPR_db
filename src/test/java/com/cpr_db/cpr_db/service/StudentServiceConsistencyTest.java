@@ -1,13 +1,16 @@
 package com.cpr_db.cpr_db.service;
 
 import com.cpr_db.cpr_db.entity.Student;
+import com.cpr_db.cpr_db.repository.ScoreRepository;
 import com.cpr_db.cpr_db.repository.StudentRepository;
+import com.cpr_db.cpr_db.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -21,6 +24,15 @@ class StudentServiceConsistencyTest {
 
     @Mock
     private StudentRepository studentRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private ScoreRepository scoreRepository;
 
     @InjectMocks
     private StudentService studentService;

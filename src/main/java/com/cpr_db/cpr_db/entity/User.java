@@ -52,6 +52,10 @@ public class User {
     @Column(name = "must_change_password")
     private Boolean mustChangePassword;
 
+    /** BE-B-03: account status (active/disabled); null is treated as active. */
+    @Column(length = 20)
+    private String status;
+
     public User() {
     }
 
@@ -67,6 +71,9 @@ public class User {
         }
         if (role == null) {
             role = "student";
+        }
+        if (status == null) {
+            status = "active";
         }
     }
 
@@ -109,5 +116,13 @@ public class User {
 
     public void setMustChangePassword(Boolean mustChangePassword) {
         this.mustChangePassword = mustChangePassword;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

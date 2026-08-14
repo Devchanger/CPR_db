@@ -101,6 +101,26 @@ class AuthServiceTest {
     }
 
     @Test
+    void shouldRejectLoginWhenAccountDisabled() {
+        AuthRequest request = new AuthRequest();
+        request.setUsername("locked");
+        request.setPassword("password123");
+
+        User user = new User();
+        user.setUsername("locked");
+        user.setPasswordHash("hashedPassword");
+        user.setStatus("disabled");
+
+        when(userRepository.findByUsername("locked")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password123", "hashedPassword")).thenReturn(true);
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> authService.login(request));
+
+        assertEquals(403, ex.getCode());
+        verify(jwtTokenUtil, never()).generateToken(anyString());
+    }
+
+    @Test
     void shouldRejectRegisterWhenPasswordViolatesPolicy() {
         RegisterRequest request = new RegisterRequest();
         request.setUsername("newuser");

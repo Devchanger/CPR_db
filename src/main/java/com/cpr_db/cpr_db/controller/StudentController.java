@@ -55,6 +55,12 @@ public class StudentController {
         return ResponseEntity.ok(ApiResponse.success(null, "deleted"));
     }
 
+    @PostMapping("/{id}/reset-password")
+    @PreAuthorize("hasAuthority('admin')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> resetPassword(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(studentService.resetPassword(id), "password reset"));
+    }
+
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Student>> updateStatus(@PathVariable Long id, @RequestBody Map<String, Object> body) {

@@ -55,6 +55,9 @@ public class AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new BusinessException(401, "invalid username or password");
         }
+        if ("disabled".equals(user.getStatus())) {
+            throw new BusinessException(403, "account is disabled");
+        }
         String token = jwtTokenUtil.generateToken(user.getUsername());
         logAuth("login", user.getId(), user.getUsername(), "logged in");
         return new AuthResponse(token, jwtTokenUtil.getExpirationMs() + System.currentTimeMillis(),
