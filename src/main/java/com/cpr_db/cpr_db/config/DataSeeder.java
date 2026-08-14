@@ -16,6 +16,7 @@ import com.cpr_db.cpr_db.repository.UserRepository;
 import com.cpr_db.cpr_db.repository.VideoRepository;
 import com.cpr_db.cpr_db.service.StudentService;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@Order(1)
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
