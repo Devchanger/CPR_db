@@ -20,7 +20,7 @@ public class Score {
     @Column(length = 50)
     private String scene;
 
-    @Column(length = 10)
+    @Column(length = 100)
     private String skill;
 
     @Column(name = "total_score")

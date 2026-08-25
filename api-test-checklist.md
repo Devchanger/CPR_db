@@ -18,7 +18,7 @@ export BASE_URL="http://localhost:8080/api"   # 本地测试
 # 管理员登录（super_admin）
 ADMIN_RESP=$(curl -s -X POST "$BASE_URL/v1/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"Admin@123456"}')
+  -d '{"username":"admin","password":"CHANGE_ME"}')
 echo "$ADMIN_RESP" | jq .
 export ADMIN_TOKEN=$(echo "$ADMIN_RESP" | jq -r '.data.token')
 echo "Admin Token: $ADMIN_TOKEN"
@@ -26,7 +26,7 @@ echo "Admin Token: $ADMIN_TOKEN"
 # 学生登录
 STUDENT_RESP=$(curl -s -X POST "$BASE_URL/v1/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"username":"testuser","password":"Test@123456"}')
+  -d '{"username":"testuser","password":"CHANGE_ME"}')
 echo "$STUDENT_RESP" | jq .
 export STUDENT_TOKEN=$(echo "$STUDENT_RESP" | jq -r '.data.token')
 echo "Student Token: $STUDENT_TOKEN"
@@ -41,17 +41,17 @@ echo "Student Token: $STUDENT_TOKEN"
 # ✅ 成功场景
 curl -s -X POST "$BASE_URL/v1/auth/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"newstudent001","password":"Test@123456"}' | jq .
+  -d '{"username":"newstudent001","password":"CHANGE_ME"}' | jq .
 
 # ❌ 失败：用户名已存在
 curl -s -X POST "$BASE_URL/v1/auth/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"Test@123456"}' | jq .
+  -d '{"username":"admin","password":"CHANGE_ME"}' | jq .
 
 # ❌ 失败：缺 username
 curl -s -X POST "$BASE_URL/v1/auth/register" \
   -H "Content-Type: application/json" \
-  -d '{"password":"Test@123456"}' | jq .
+  -d '{"password":"CHANGE_ME"}' | jq .
 
 # ❌ 失败：缺 password
 curl -s -X POST "$BASE_URL/v1/auth/register" \
@@ -64,7 +64,7 @@ curl -s -X POST "$BASE_URL/v1/auth/register" \
 # ✅ 成功场景
 curl -s -X POST "$BASE_URL/v1/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"Admin@123456"}' | jq .
+  -d '{"username":"admin","password":"CHANGE_ME"}' | jq .
 
 # ❌ 失败：密码错误
 curl -s -X POST "$BASE_URL/v1/auth/login" \
@@ -111,13 +111,13 @@ curl -s -X GET "$BASE_URL/v1/user/info" \
 curl -s -X PUT "$BASE_URL/v1/user/password" \
   -H "Authorization: Bearer $STUDENT_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"oldPassword":"Test@123456","newPassword":"NewTest@123456"}' | jq .
+  -d '{"oldPassword":"CHANGE_ME","newPassword":"NewCHANGE_ME"}' | jq .
 
 # ⚠️ 如果改了密码，用新密码重新登录获取 Token
 curl -s -X PUT "$BASE_URL/v1/user/password" \
   -H "Authorization: Bearer $STUDENT_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"oldPassword":"NewTest@123456","newPassword":"Test@123456"}' | jq .  # 改回去
+  -d '{"oldPassword":"NewCHANGE_ME","newPassword":"CHANGE_ME"}' | jq .  # 改回去
 
 # ❌ 失败：旧密码不正确
 curl -s -X PUT "$BASE_URL/v1/user/password" \
@@ -169,31 +169,31 @@ curl -s -X GET "$BASE_URL/v1/user/admins" | jq .
 curl -s -X POST "$BASE_URL/v1/user/admins" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"username":"newadmin001","password":"Admin@123456","role":"admin"}' | jq .
+  -d '{"username":"newadmin001","password":"CHANGE_ME","role":"admin"}' | jq .
 
 # ❌ 失败：用户名已存在（409）
 curl -s -X POST "$BASE_URL/v1/user/admins" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"Admin@123456","role":"admin"}' | jq .
+  -d '{"username":"admin","password":"CHANGE_ME","role":"admin"}' | jq .
 
 # ❌ 失败：缺 username
 curl -s -X POST "$BASE_URL/v1/user/admins" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"password":"Admin@123456","role":"admin"}' | jq .
+  -d '{"password":"CHANGE_ME","role":"admin"}' | jq .
 
 # ❌ 失败：非法 role
 curl -s -X POST "$BASE_URL/v1/user/admins" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"username":"badadmin","password":"Admin@123456","role":"student"}' | jq .
+  -d '{"username":"badadmin","password":"CHANGE_ME","role":"student"}' | jq .
 
 # ❌ 失败：学生无权限（403）
 curl -s -X POST "$BASE_URL/v1/user/admins" \
   -H "Authorization: Bearer $STUDENT_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"username":"hackadmin","password":"Admin@123456","role":"super_admin"}' | jq .
+  -d '{"username":"hackadmin","password":"CHANGE_ME","role":"super_admin"}' | jq .
 ```
 
 ### 2.5 修改用户角色 — PUT /v1/user/{id}/role
@@ -1074,7 +1074,7 @@ curl -s -o /dev/null -w "%{http_code}" "http://localhost:8080/uploads/nonexisten
 | 7 | **P1** | KnowledgeController | `GET /v1/knowledge` 返回 List（无分页），前端期望 {list, total} | 知识库列表分页失效 |
 | 8 | **P1** | ScoreController | 学生查成绩返回 List 数组，管理员查全部返回 {list, total}，响应结构不一致 | 前端需做两套适配 |
 | 9 | **P1** | LogService | `log()` 方法定义但无任何 Controller 调用，日志永远不会被记录 | 操作日志页面永远空 |
-| 10 | **P1** | DataSeeder | 默认密码 Admin@123456 / Test@123456 硬编码在源码中 | 安全风险：默认凭证可被猜测 |
+| 10 | **P1** | DataSeeder | 默认密码 CHANGE_ME / CHANGE_ME 硬编码在源码中 | 安全风险：默认凭证可被猜测 |
 | 11 | **P1** | SecurityConfig | /api/v1/videos/** 从 permitAll 改为 authenticated，与 GAPS 文档 0.4 节描述不一致 | 文档与实现不同步（功能正确） |
 | 12 | **P2** | VideoController | GET /videos/{videoId} 用 String videoId，PUT/DELETE 用 Long id，路径参数类型混用 | 可能造成前端困惑 |
 | 13 | **P2** | UploadController | 视频上传 durationSeconds 硬编码为 0，未解析真实时长 | 视频时长信息缺失 |

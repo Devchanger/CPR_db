@@ -19,7 +19,7 @@ public class LogController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getLogs(
             @RequestParam(name = "adminId", required = false) Long adminId,
             @RequestParam(name = "action", required = false) String action,

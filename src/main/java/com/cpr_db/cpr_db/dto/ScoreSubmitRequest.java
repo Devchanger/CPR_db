@@ -1,5 +1,6 @@
 package com.cpr_db.cpr_db.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
@@ -18,20 +19,25 @@ public class ScoreSubmitRequest {
     @NotNull(message = "totalScore is required")
     @DecimalMin(value = "0.0", message = "totalScore must be >= 0")
     @DecimalMax(value = "100.0", message = "totalScore must be <= 100")
+    @JsonAlias("totalScore")
     private Float totalScore;
 
     @DecimalMin(value = "0.0", message = "compressionDepthAvg must be >= 0")
     @DecimalMax(value = "10.0", message = "compressionDepthAvg must be <= 10")
+    @JsonAlias("compressionDepthAvg")
     private Float compressionDepthAvg;
 
     @DecimalMin(value = "0.0", message = "compressionRateAvg must be >= 0")
     @DecimalMax(value = "300.0", message = "compressionRateAvg must be <= 300")
+    @JsonAlias("compressionRateAvg")
     private Float compressionRateAvg;
 
     @Min(value = 0, message = "errorCount must be >= 0")
     @Max(value = 1000, message = "errorCount must be <= 1000")
+    @JsonAlias("errorCount")
     private Integer errorCount;
 
+    @JsonAlias("stepDetails")
     private String stepDetails;
 
     public String getScene() { return scene; }

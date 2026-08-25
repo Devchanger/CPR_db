@@ -5,21 +5,13 @@ import com.cpr_db.cpr_db.dto.SceneCreateRequest;
 import com.cpr_db.cpr_db.dto.SceneUpdateRequest;
 import com.cpr_db.cpr_db.entity.Scene;
 import com.cpr_db.cpr_db.repository.SceneRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class SceneService {
-
-    private static final int MAX_PAGE_SIZE = 100;
 
     private final SceneRepository sceneRepository;
 
@@ -30,29 +22,6 @@ public class SceneService {
     @Transactional(readOnly = true)
     public List<Scene> getAll() {
         return sceneRepository.findAllByOrderBySortOrderAsc();
-    }
-
-    @Transactional(readOnly = true)
-    public Map<String, Object> getSceneList(String keyword, int page, int pageSize) {
-        page = clampPage(page);
-        pageSize = clampPageSize(pageSize);
-        PageRequest pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.ASC, "sortOrder"));
-        Page<Scene> result;
-        if (keyword != null && !keyword.isBlank()) {
-            result = sceneRepository.findByNameContainingIgnoreCase(keyword, pageable);
-        } else {
-            result = sceneRepository.findAll(pageable);
-        }
-        List<Map<String, Object>> list = new ArrayList<>();
-        for (Scene scene : result.getContent()) {
-            list.add(toDetailMap(scene));
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("list", list);
-        map.put("total", result.getTotalElements());
-        map.put("page", result.getNumber() + 1);
-        map.put("page_size", result.getSize());
-        return map;
     }
 
     @Transactional(readOnly = true)
@@ -105,25 +74,4 @@ public class SceneService {
         return sceneRepository.save(scene);
     }
 
-    private Map<String, Object> toDetailMap(Scene scene) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", scene.getId());
-        map.put("name", scene.getName());
-        map.put("description", scene.getDescription());
-        map.put("type", scene.getType());
-        map.put("icon", scene.getIcon());
-        map.put("sort_order", scene.getSortOrder());
-        map.put("status", scene.getStatus());
-        map.put("created_at", scene.getCreatedAt());
-        return map;
-    }
-
-    private int clampPage(int page) {
-        return page < 1 ? 1 : page;
-    }
-
-    private int clampPageSize(int pageSize) {
-        if (pageSize < 1) return 10;
-        return Math.min(pageSize, MAX_PAGE_SIZE);
-    }
 }

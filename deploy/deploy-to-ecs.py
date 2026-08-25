@@ -6,11 +6,20 @@ import paramiko, time, sys, os
 HOST = "123.57.30.132"
 PORT = 22
 USER = "root"
-PASS = "@Password1"
+SSH_PASSWORD_ENV = "CPR_ECS_SSH_PASSWORD"
 DEPLOY_FILES = os.path.dirname(os.path.abspath(__file__))  # deploy/ dir
 SRC_REPO = "https://github.com/Devchanger/CPR_db.git"
 APP_DIR = "/opt/cpr-db"
 SRC_DIR = "/opt/cpr-db-src"
+
+
+def resolve_ssh_password() -> str:
+    password = os.environ.get(SSH_PASSWORD_ENV)
+    if not password:
+        print(f"[ABORT] 未设置环境变量 {SSH_PASSWORD_ENV}（服务器 SSH 密码），拒绝使用硬编码凭据。")
+        print(f"请先导出：export {SSH_PASSWORD_ENV}='...'（或用 SSH 密钥方案替换）。")
+        sys.exit(1)
+    return password
 
 
 def run(ssh: paramiko.SSHClient, cmd: str, desc: str = ""):
@@ -32,10 +41,11 @@ def run(ssh: paramiko.SSHClient, cmd: str, desc: str = ""):
 
 
 def main():
+    password = resolve_ssh_password()
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print(f"🔗 连接 {HOST} ...")
-    ssh.connect(HOST, PORT, USER, PASS, timeout=15, look_for_keys=False, allow_agent=False)
+    ssh.connect(HOST, PORT, USER, password, timeout=15, look_for_keys=False, allow_agent=False)
 
     # ── Step 1: 系统依赖 ──
     run(ssh,

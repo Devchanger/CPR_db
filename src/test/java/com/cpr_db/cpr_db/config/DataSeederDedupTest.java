@@ -8,11 +8,13 @@ import com.cpr_db.cpr_db.entity.User;
 import com.cpr_db.cpr_db.entity.Video;
 import com.cpr_db.cpr_db.repository.KnowledgeRepository;
 import com.cpr_db.cpr_db.repository.SceneRepository;
+import com.cpr_db.cpr_db.repository.ScoreRepository;
 import com.cpr_db.cpr_db.repository.SkillRepository;
 import com.cpr_db.cpr_db.repository.StepRepository;
 import com.cpr_db.cpr_db.repository.StudentRepository;
 import com.cpr_db.cpr_db.repository.UserRepository;
 import com.cpr_db.cpr_db.repository.VideoRepository;
+import com.cpr_db.cpr_db.service.StudentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,13 +41,17 @@ class DataSeederDedupTest {
     @Mock KnowledgeRepository knowledgeRepository;
     @Mock UserRepository userRepository;
     @Mock PasswordEncoder passwordEncoder;
+    @Mock ScoreRepository scoreRepository;
 
     private DataSeeder dataSeeder;
 
     @BeforeEach
     void setUp() {
+        StudentService studentService =
+                new StudentService(studentRepository, userRepository, passwordEncoder, scoreRepository);
         dataSeeder = new DataSeeder(videoRepository, sceneRepository, skillRepository,
-                stepRepository, studentRepository, knowledgeRepository, userRepository, passwordEncoder);
+                stepRepository, studentRepository, knowledgeRepository, userRepository, passwordEncoder,
+                studentService);
     }
 
     private void stubEmptyDb() {
@@ -75,17 +81,19 @@ class DataSeederDedupTest {
     }
 
     @Test
-    @DisplayName("P0-8 exactly one super_admin seed account created on first run")
-    void superAdminSeed_unique() {
+    @DisplayName("P0-8/BE-B-01 exactly one admin seed account created on first run")
+    void adminSeed_unique() {
         stubEmptyDb();
         dataSeeder.run();
 
         ArgumentCaptor<User> cap = ArgumentCaptor.forClass(User.class);
         verify(userRepository, atLeastOnce()).save(cap.capture());
-        long superAdmins = cap.getAllValues().stream()
-                .filter(u -> "super_admin".equals(u.getRole()))
+        long admins = cap.getAllValues().stream()
+                .filter(u -> "admin".equals(u.getRole()))
                 .count();
-        assertEquals(1, superAdmins, "should seed exactly one super_admin (P0-8)");
+        assertEquals(1, admins, "should seed exactly one admin (P0-8/BE-B-01)");
+        assertTrue(cap.getAllValues().stream().allMatch(User::isMustChangePassword),
+                "all seed-created accounts must be flagged for forced password change (BE-B-06/D14)");
     }
 
     @Test
@@ -107,5 +115,46 @@ class DataSeederDedupTest {
         verify(skillRepository, never()).save(any(Skill.class));
         verify(studentRepository, never()).save(any(Student.class));
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("DM-B-01 existing students without username get a linked pinyin account (zhangsan)")
+    void existingStudents_getLinkedAccounts() {
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed");
+        when(sceneRepository.findAllByOrderBySortOrderAsc()).thenReturn(List.of());
+        when(knowledgeRepository.count()).thenReturn(999L);
+        when(videoRepository.count()).thenReturn(999L);
+        when(sceneRepository.count()).thenReturn(999L);
+        when(skillRepository.count()).thenReturn(999L);
+        when(stepRepository.count()).thenReturn(999L);
+        when(studentRepository.count()).thenReturn(1L);
+        when(userRepository.existsByUsername(anyString())).thenReturn(false);
+        Student zhangsan = new Student();
+        zhangsan.setName("张三");
+        when(studentRepository.findAll()).thenReturn(List.of(zhangsan));
+
+        dataSeeder.run();
+
+        ArgumentCaptor<User> cap = ArgumentCaptor.forClass(User.class);
+        verify(userRepository, atLeastOnce()).save(cap.capture());
+        User linked = cap.getAllValues().stream()
+                .filter(u -> "zhangsan".equals(u.getUsername()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("linked zhangsan account not created"));
+        assertEquals("student", linked.getRole());
+        assertTrue(linked.isMustChangePassword(), "linked account must force password change");
+        assertEquals("zhangsan", zhangsan.getUsername(), "student row must carry the mapping key");
+    }
+
+    @Test
+    @DisplayName("BE-C-04 seeded videos default to active vocabulary")
+    void videoSeeds_statusActive() {
+        stubEmptyDb();
+        dataSeeder.run();
+
+        ArgumentCaptor<Video> cap = ArgumentCaptor.forClass(Video.class);
+        verify(videoRepository, atLeastOnce()).save(cap.capture());
+        assertTrue(cap.getAllValues().stream().allMatch(v -> "active".equals(v.getStatus())),
+                "all seeded videos must use the unified active status");
     }
 }

@@ -1,13 +1,18 @@
 package com.cpr_db.cpr_db.service;
 
 import com.cpr_db.cpr_db.common.BusinessException;
+import com.cpr_db.cpr_db.common.PinyinUtil;
 import com.cpr_db.cpr_db.dto.StudentCreateRequest;
 import com.cpr_db.cpr_db.dto.StudentUpdateRequest;
 import com.cpr_db.cpr_db.entity.Student;
+import com.cpr_db.cpr_db.entity.User;
+import com.cpr_db.cpr_db.repository.ScoreRepository;
 import com.cpr_db.cpr_db.repository.StudentRepository;
+import com.cpr_db.cpr_db.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,16 +20,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class StudentService {
 
     private static final int MAX_PAGE_SIZE = 100;
+    private static final Set<String> VALID_STATUSES = Set.of("active", "disabled", "archived");
 
     private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final ScoreRepository scoreRepository;
 
-    public StudentService(StudentRepository studentRepository) {
+    public StudentService(StudentRepository studentRepository,
+                          UserRepository userRepository,
+                          PasswordEncoder passwordEncoder,
+                          ScoreRepository scoreRepository) {
         this.studentRepository = studentRepository;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.scoreRepository = scoreRepository;
     }
 
     @Transactional(readOnly = true)
@@ -41,13 +57,13 @@ public class StudentService {
         boolean hasKeyword = keyword != null && !keyword.isBlank();
         boolean hasStatus = status != null && !status.isBlank();
         if (hasKeyword && hasStatus) {
-            result = studentRepository.findByKeywordOrPhoneAndStatus(keyword, keyword, status, pageable);
+            result = studentRepository.findByNameContainingIgnoreCaseAndStatus(keyword, status, pageable);
         } else if (hasKeyword) {
-            result = studentRepository.findByKeywordOrPhone(keyword, keyword, pageable);
+            result = studentRepository.findByNameContainingIgnoreCaseAndStatusNot(keyword, "archived", pageable);
         } else if (hasStatus) {
             result = studentRepository.findByStatus(status, pageable);
         } else {
-            result = studentRepository.findAll(pageable);
+            result = studentRepository.findByStatusNot("archived", pageable);
         }
         List<Map<String, Object>> list = new ArrayList<>();
         for (Student student : result.getContent()) {
@@ -74,14 +90,80 @@ public class StudentService {
         if (name == null || name.isBlank()) {
             throw new BusinessException(400, "name is required");
         }
+        String username = resolveUsername(req.getUsername(), name);
+        createUserAccount(username, name, PinyinUtil.initialPassword(username));
+
         Student student = new Student();
         student.setName(name);
+        student.setUsername(username);
         student.setPhone(req.getPhone());
         student.setEmail(req.getEmail());
         student.setGroupName(req.getGroupName());
         student.setCertStatus(req.getCertStatus());
         student.setTrainedAt(req.getTrainedAt());
         return studentRepository.save(student);
+    }
+
+    /**
+     * BE-B-03: create a student account with a pinyin username and the D18 initial
+     * password (pinyin padded with '1' to 6 chars). First login must change it.
+     */
+    public User createUserAccount(String username, String realName, String initialPassword) {
+        User user = new User();
+        user.setUsername(username);
+        user.setPasswordHash(passwordEncoder.encode(initialPassword));
+        user.setRole("student");
+        user.setRealName(realName);
+        user.setStatus("active");
+        user.setMustChangePassword(true);
+        return userRepository.save(user);
+    }
+
+    /**
+     * DM-B-01: make sure an existing student row has a linked User account.
+     * Idempotent: skips when the username already exists.
+     */
+    @Transactional
+    public Student ensureAccount(Student student) {
+        String username = student.getUsername();
+        if (username == null || username.isBlank()) {
+            username = resolveGeneratedUsername(PinyinUtil.pinyin(student.getName()));
+            student.setUsername(username);
+        }
+        if (!userRepository.existsByUsername(username)) {
+            createUserAccount(username, student.getName(), PinyinUtil.initialPassword(username));
+        }
+        return studentRepository.save(student);
+    }
+
+    @Transactional
+    public Map<String, Object> resetPassword(Long studentId) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new BusinessException(404, "student not found"));
+        String username = student.getUsername();
+        if (username == null || username.isBlank()) {
+            username = resolveGeneratedUsername(PinyinUtil.pinyin(student.getName()));
+            student.setUsername(username);
+        }
+        String finalUsername = username;
+        User user = userRepository.findByUsername(finalUsername).orElseGet(() -> {
+            User u = new User();
+            u.setUsername(finalUsername);
+            u.setRole("student");
+            u.setRealName(student.getName());
+            return u;
+        });
+        String newPassword = PinyinUtil.initialPassword(username);
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setStatus("active");
+        user.setMustChangePassword(true);
+        userRepository.save(user);
+        studentRepository.save(student);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("username", username);
+        result.put("new_password", newPassword);
+        return result;
     }
 
     @Transactional
@@ -101,29 +183,86 @@ public class StudentService {
     public void deleteStudent(Long id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "student not found"));
-        studentRepository.delete(student);
+        // BE-B-04: soft delete — archived keeps scores/stats and is excluded from default lists.
+        student.setStatus("archived");
+        studentRepository.save(student);
     }
 
     @Transactional
     public Student updateStudentStatus(Long id, String status) {
+        if (status == null || !VALID_STATUSES.contains(status)) {
+            throw new BusinessException(400, "status must be active, disabled or archived");
+        }
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "student not found"));
         student.setStatus(status);
-        return studentRepository.save(student);
+        Student saved = studentRepository.save(student);
+        syncUserStatus(saved);
+        return saved;
     }
 
     private Map<String, Object> toDetailMap(Student student) {
         Map<String, Object> map = new HashMap<>();
         map.put("id", student.getId());
         map.put("name", student.getName());
+        map.put("username", student.getUsername());
         map.put("phone", student.getPhone());
         map.put("email", student.getEmail());
         map.put("group_name", student.getGroupName());
         map.put("cert_status", student.getCertStatus());
         map.put("trained_at", student.getTrainedAt());
         map.put("status", student.getStatus());
+        map.put("training_count", trainingCount(student.getUsername()));
+        map.put("average_score", averageScore(student.getUsername()));
         map.put("created_at", student.getCreatedAt());
         return map;
+    }
+
+    private long trainingCount(String username) {
+        return username == null || username.isBlank() ? 0 : scoreRepository.countByUsername(username);
+    }
+
+    private double averageScore(String username) {
+        if (username == null || username.isBlank()) {
+            return 0.0;
+        }
+        Double avg = scoreRepository.averageTotalScoreByUsername(username);
+        return avg == null ? 0.0 : avg;
+    }
+
+    /**
+     * BE-B-03: disabling/archiving a student also disables the linked User login.
+     */
+    private void syncUserStatus(Student student) {
+        if (student.getUsername() == null || student.getUsername().isBlank()) {
+            return;
+        }
+        userRepository.findByUsername(student.getUsername()).ifPresent(user -> {
+            user.setStatus("active".equals(student.getStatus()) ? "active" : "disabled");
+            userRepository.save(user);
+        });
+    }
+
+    private String resolveUsername(String requested, String name) {
+        if (requested != null && !requested.isBlank()) {
+            String username = requested.trim();
+            if (userRepository.existsByUsername(username)) {
+                throw new BusinessException(409, "username already exists");
+            }
+            return username;
+        }
+        return resolveGeneratedUsername(PinyinUtil.pinyin(name));
+    }
+
+    private String resolveGeneratedUsername(String base) {
+        if (!userRepository.existsByUsername(base)) {
+            return base;
+        }
+        int suffix = 2;
+        while (userRepository.existsByUsername(base + suffix)) {
+            suffix++;
+        }
+        return base + suffix;
     }
 
     private int clampPage(int page) {

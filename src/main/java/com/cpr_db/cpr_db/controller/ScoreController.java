@@ -65,7 +65,7 @@ public class ScoreController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Void>> deleteScore(@PathVariable Long id) {
         scoreService.deleteScore(id);
         return ResponseEntity.ok(ApiResponse.success(null, "deleted"));
@@ -95,6 +95,6 @@ public class ScoreController {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet())
                 .stream()
-                .anyMatch(a -> "admin".equals(a) || "super_admin".equals(a));
+                .anyMatch("admin"::equals);
     }
 }

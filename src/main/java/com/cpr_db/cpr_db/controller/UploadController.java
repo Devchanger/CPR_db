@@ -26,7 +26,7 @@ public class UploadController {
     }
 
     @PostMapping(value = "/video", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> uploadVideo(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(ApiResponse.success(uploadService.uploadVideo(file), "uploaded"));
     }

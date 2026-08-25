@@ -37,26 +37,32 @@ public class StudentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Student>> createStudent(@Valid @RequestBody StudentCreateRequest req) {
         return ResponseEntity.ok(ApiResponse.success(studentService.createStudent(req), "created"));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Student>> updateStudent(@PathVariable Long id, @Valid @RequestBody StudentUpdateRequest req) {
         return ResponseEntity.ok(ApiResponse.success(studentService.updateStudent(id, req), "updated"));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Void>> deleteStudent(@PathVariable Long id) {
         studentService.deleteStudent(id);
         return ResponseEntity.ok(ApiResponse.success(null, "deleted"));
     }
 
+    @PostMapping("/{id}/reset-password")
+    @PreAuthorize("hasAuthority('admin')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> resetPassword(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(studentService.resetPassword(id), "password reset"));
+    }
+
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Student>> updateStatus(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         String status = body.get("status") == null ? null : body.get("status").toString();
         return ResponseEntity.ok(ApiResponse.success(studentService.updateStudentStatus(id, status), "updated"));

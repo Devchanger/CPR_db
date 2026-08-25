@@ -23,6 +23,20 @@ public class ScoreService {
 
     private static final int MAX_PAGE_SIZE = 100;
 
+    /**
+     * BE-C-03 (S4): VR submits English scene/skill names; normalize to the canonical
+     * Chinese values used by seeds/analysis. Unknown values fall back as-is.
+     * Mapping content will be re-verified against the VR code when it becomes available.
+     */
+    private static final Map<String, String> SCENE_ALIASES = Map.of(
+            "Subway", "地铁站",
+            "Subway_Terminal", "地铁站",
+            "Hospital_Corridor", "医院走廊",
+            "Ruins", "废墟");
+
+    private static final Map<String, String> SKILL_ALIASES = Map.of(
+            "CPR", "成人胸外按压");
+
     private final ScoreRepository scoreRepository;
     private final LogService logService;
 
@@ -36,8 +50,8 @@ public class ScoreService {
         Score score = new Score();
         score.setUserId(userId);
         score.setUsername(username);
-        score.setScene(request.getScene());
-        score.setSkill(request.getSkill());
+        score.setScene(normalize(SCENE_ALIASES, request.getScene()));
+        score.setSkill(normalize(SKILL_ALIASES, request.getSkill()));
         score.setTotalScore(request.getTotalScore());
         score.setCompressionDepthAvg(request.getCompressionDepthAvg());
         score.setCompressionRateAvg(request.getCompressionRateAvg());
@@ -153,5 +167,12 @@ public class ScoreService {
     private int clampPageSize(int pageSize) {
         if (pageSize < 1) return 10;
         return Math.min(pageSize, MAX_PAGE_SIZE);
+    }
+
+    private String normalize(Map<String, String> aliases, String value) {
+        if (value == null) {
+            return null;
+        }
+        return aliases.getOrDefault(value, value);
     }
 }

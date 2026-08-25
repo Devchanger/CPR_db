@@ -36,27 +36,27 @@ public class StepController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> createStep(@Valid @RequestBody StepCreateRequest req) {
         return ResponseEntity.ok(ApiResponse.success(stepService.createStep(req), "created"));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateStep(@PathVariable Long id,
                                                                       @Valid @RequestBody StepUpdateRequest req) {
         return ResponseEntity.ok(ApiResponse.success(stepService.updateStep(id, req), "updated"));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Void>> deleteStep(@PathVariable Long id) {
         stepService.deleteStep(id);
         return ResponseEntity.ok(ApiResponse.success(null, "deleted"));
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateStatus(@PathVariable Long id,
                                                                          @RequestBody Map<String, Object> body) {
         String status = body.get("status") == null ? null : body.get("status").toString();
@@ -64,7 +64,7 @@ public class StepController {
     }
 
     @PutMapping("/{id}/reorder")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> reorderStep(@PathVariable Long id,
                                                                         @RequestBody Map<String, Object> body) {
         String direction = body.get("direction") == null ? null : body.get("direction").toString();

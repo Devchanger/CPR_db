@@ -52,7 +52,7 @@ public class Video {
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();
-        if (status == null) status = "published";
+        if (status == null) status = "active";
         if (videoId == null) videoId = "v" + System.currentTimeMillis();
     }
 

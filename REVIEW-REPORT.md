@@ -82,7 +82,7 @@
 | P1-6 | ScoreService.getStats 全量加载内存计算 | ScoreService.java L55-96 | 后端+QA |
 | P1-7 | 分页无上限（pageSize 可传 999999） | 所有 Service pageSize 检查 | 后端+QA（已升为 P0-12） |
 | P1-8 | ScoreDto 字段名不一致（compressionDepthAvg 驼峰 vs compression_depth_avg 蛇形） | ScoreDto.java | QA |
-| P1-9 | 默认凭证硬编码（Admin@123456 / Test@123456） | DataSeeder.java L137,146 | 三方一致 |
+| P1-9 | 默认凭证硬编码（CHANGE_ME / CHANGE_ME） | DataSeeder.java L137,146 | 三方一致 |
 | P1-10 | JWT 无 refresh token，access token 24h 过长 | application.example.properties | 后端 |
 | P1-11 | ScoreSubmitRequest 无 @Min/@Max 校验分数范围 | ScoreSubmitRequest | QA |
 | P1-12 | 无速率限制（登录/注册可被暴力枚举） | 全局无 RateLimiter | QA |

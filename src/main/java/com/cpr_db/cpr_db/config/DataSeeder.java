@@ -14,16 +14,31 @@ import com.cpr_db.cpr_db.repository.StepRepository;
 import com.cpr_db.cpr_db.repository.StudentRepository;
 import com.cpr_db.cpr_db.repository.UserRepository;
 import com.cpr_db.cpr_db.repository.VideoRepository;
+import com.cpr_db.cpr_db.service.StudentService;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Component
+@Order(1)
 public class DataSeeder implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String PASSWORD_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     private final VideoRepository videoRepository;
     private final SceneRepository sceneRepository;
@@ -33,6 +48,7 @@ public class DataSeeder implements CommandLineRunner {
     private final KnowledgeRepository knowledgeRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StudentService studentService;
 
     public DataSeeder(VideoRepository videoRepository,
                       SceneRepository sceneRepository,
@@ -41,7 +57,8 @@ public class DataSeeder implements CommandLineRunner {
                       StudentRepository studentRepository,
                       KnowledgeRepository knowledgeRepository,
                       UserRepository userRepository,
-                      PasswordEncoder passwordEncoder) {
+                      PasswordEncoder passwordEncoder,
+                      StudentService studentService) {
         this.videoRepository = videoRepository;
         this.sceneRepository = sceneRepository;
         this.skillRepository = skillRepository;
@@ -50,18 +67,24 @@ public class DataSeeder implements CommandLineRunner {
         this.knowledgeRepository = knowledgeRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.studentService = studentService;
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
         if (videoRepository.count() == 0) {
             Video v1 = new Video("video1", "https://example.com/videos/video1.mp4", 120);
             v1.setTitle("CPR Demo Video 1");
+            v1.setStatus("active");
             videoRepository.save(v1);
             Video v2 = new Video("video2", "https://example.com/videos/video2.mp4", 180);
             v2.setTitle("CPR Demo Video 2");
+            v2.setStatus("active");
             videoRepository.save(v2);
         }
+        // BE-C-04: legacy 'published' rows converge to the unified 'active' vocabulary.
+        videoRepository.convergePublishedToActive();
 
         Map<String, Long> sceneIds = new HashMap<>();
         if (sceneRepository.count() == 0) {
@@ -70,6 +93,10 @@ public class DataSeeder implements CommandLineRunner {
             sceneRepository.save(scene("AED 使用", "自动体外除颤器 (AED) 操作训练场景", "basic", "zap", 3));
             sceneRepository.save(scene("气道异物梗阻", "海姆立克急救法训练场景", "advanced", "alert", 4));
             sceneRepository.save(scene("综合考核", "包含所有急救技能的综合考核场景", "advanced", "star", 5));
+            // BE-C-03: VR-aligned canonical scene names (Subway_Terminal/Hospital_Corridor -> 地铁站/医院走廊).
+            sceneRepository.save(scene("地铁站", "地铁站场景的 CPR 训练（VR: Subway_Terminal）", "vr", "train", 6));
+            sceneRepository.save(scene("医院走廊", "医院走廊场景的 CPR 训练（VR: Hospital_Corridor）", "vr", "hospital", 7));
+            sceneRepository.save(scene("废墟", "废墟场景的 CPR 训练（VR: Ruins）", "vr", "ruins", 8));
         }
         for (Scene s : sceneRepository.findAllByOrderBySortOrderAsc()) {
             sceneIds.put(s.getName(), s.getId());
@@ -167,26 +194,102 @@ public class DataSeeder implements CommandLineRunner {
               "常见问题", "CPR,成功,ROSC");
         }
 
-        String adminPass = System.getenv("CPR_ADMIN_PASSWORD");
-        if (adminPass == null || adminPass.isBlank()) adminPass = "Admin@123456";
+        String adminPass = seedPassword("CPR_ADMIN_PASSWORD", "admin");
         if (!userRepository.existsByUsername("admin")) {
             User admin = new User();
             admin.setUsername("admin");
             admin.setPasswordHash(passwordEncoder.encode(adminPass));
-            admin.setRole("super_admin");
+            admin.setRole("admin");
             admin.setRealName("超级管理员");
+            admin.setMustChangePassword(true);
             userRepository.save(admin);
         }
 
-        String testPass = System.getenv("CPR_TEST_PASSWORD");
-        if (testPass == null || testPass.isBlank()) testPass = "Test@123456";
+        String testPass = seedPassword("CPR_TEST_PASSWORD", "testuser");
         if (!userRepository.existsByUsername("testuser")) {
             User testuser = new User();
             testuser.setUsername("testuser");
             testuser.setPasswordHash(passwordEncoder.encode(testPass));
             testuser.setRole("student");
+            testuser.setMustChangePassword(true);
             userRepository.save(testuser);
         }
+
+        // BE-B-01: converge any legacy super_admin rows to admin (idempotent).
+        userRepository.convergeSuperAdminToAdmin();
+
+        // DM-B-01: existing student rows get a linked pinyin account (张三 -> zhangsan, 李四 -> lisi11), idempotent.
+        studentRepository.findAll().forEach(studentService::ensureAccount);
+    }
+
+    /**
+     * D14: never fall back to a hard-coded default. Use the configured env value,
+     * or generate a random D5-compliant initial password (logged once; first login
+     * forces a password change).
+     */
+    private String seedPassword(String envName, String username) {
+        String password = System.getenv(envName);
+        if (password != null && !password.isBlank()) {
+            return password;
+        }
+        String generated = randomPassword();
+        log.warn("{} 未设置，已为 {} 生成随机初始密码 {}（首次登录将强制改密）", envName, username, generated);
+        return generated;
+    }
+
+    private String randomPassword() {
+        StringBuilder sb = new StringBuilder(12);
+        for (int i = 0; i < 12; i++) {
+            sb.append(PASSWORD_CHARS.charAt(RANDOM.nextInt(PASSWORD_CHARS.length())));
+        }
+        return sb.toString();
+    }
+
+    private Scene scene(String name, String desc, String type, String icon, int sortOrder) {
+        Scene s = new Scene();
+        s.setName(name);
+        s.setDescription(desc);
+        s.setType(type);
+        s.setIcon(icon);
+        s.setSortOrder(sortOrder);
+        return s;
+    }
+
+    private Knowledge k(String question, String answer, String category, String tags) {
+        Knowledge knowledge = new Knowledge();
+        knowledge.setQuestion(question);
+        knowledge.setAnswer(answer);
+        knowledge.setCategory(category);
+        knowledge.setTags(tags);
+        knowledgeRepository.save(knowledge);
+        return knowledge;
+    }
+
+    private Skill skill(String name, String desc, String icon, Long sceneId, int sortOrder) {
+        Skill s = new Skill();
+        s.setName(name);
+        s.setDescription(desc);
+        s.setIcon(icon);
+        s.setSceneId(sceneId);
+        s.setSortOrder(sortOrder);
+        return s;
+    }
+
+    private Step step(Long skillId, String title, String desc, int order) {
+        Step s = new Step();
+        s.setSkillId(skillId);
+        s.setTitle(title);
+        s.setDescription(desc);
+        s.setOrder(order);
+        return s;
+    }
+
+    private Student student(String name, String phone, String groupName) {
+        Student s = new Student();
+        s.setName(name);
+        s.setPhone(phone);
+        s.setGroupName(groupName);
+        return s;
     }
 
     private Scene scene(String name, String desc, String type, String icon, int sortOrder) {

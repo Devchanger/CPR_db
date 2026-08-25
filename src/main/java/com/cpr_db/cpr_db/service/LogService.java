@@ -99,8 +99,6 @@ public class LogService {
         Map<String, Object> map = new HashMap<>();
         map.put("list", list);
         map.put("total", result.getTotalElements());
-        map.put("page", result.getNumber() + 1);
-        map.put("page_size", result.getSize());
         return map;
     }
 }

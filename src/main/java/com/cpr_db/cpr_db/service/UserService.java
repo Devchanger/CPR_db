@@ -1,6 +1,7 @@
 package com.cpr_db.cpr_db.service;
 
 import com.cpr_db.cpr_db.common.BusinessException;
+import com.cpr_db.cpr_db.common.PasswordPolicy;
 import com.cpr_db.cpr_db.dto.PasswordChangeRequest;
 import com.cpr_db.cpr_db.entity.User;
 import com.cpr_db.cpr_db.repository.UserRepository;
@@ -32,7 +33,11 @@ public class UserService {
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
             throw new BusinessException(400, "old password is incorrect");
         }
+        if (!PasswordPolicy.isValid(request.getNewPassword())) {
+            throw new BusinessException(400, PasswordPolicy.MESSAGE);
+        }
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setMustChangePassword(false);
         userRepository.save(user);
     }
 }

@@ -3,6 +3,7 @@ package com.cpr_db.cpr_db.service;
 import com.cpr_db.cpr_db.dto.AuthRequest;
 import com.cpr_db.cpr_db.dto.AuthResponse;
 import com.cpr_db.cpr_db.dto.RegisterRequest;
+import com.cpr_db.cpr_db.common.BusinessException;
 import com.cpr_db.cpr_db.entity.User;
 import com.cpr_db.cpr_db.repository.UserRepository;
 import com.cpr_db.cpr_db.security.JwtTokenUtil;
@@ -34,7 +35,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(jwtTokenUtil.getExpirationMs()).thenReturn(3600000L);
+        lenient().when(jwtTokenUtil.getExpirationMs()).thenReturn(3600000L);
     }
 
     @Test
@@ -76,5 +77,57 @@ class AuthServiceTest {
 
         assertNotNull(response);
         assertEquals("jwt.token.here", response.getToken());
+        assertFalse(response.isMustChangePassword());
+    }
+
+    @Test
+    void shouldReturnMustChangePasswordFlagForSeededAccount() {
+        AuthRequest request = new AuthRequest();
+        request.setUsername("admin");
+        request.setPassword("initialpass");
+
+        User user = new User();
+        user.setUsername("admin");
+        user.setPasswordHash("hashedPassword");
+        user.setMustChangePassword(true);
+
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("initialpass", "hashedPassword")).thenReturn(true);
+        when(jwtTokenUtil.generateToken("admin")).thenReturn("jwt.token.here");
+
+        AuthResponse response = authService.login(request);
+
+        assertTrue(response.isMustChangePassword(), "first login of a seed account must flag forced change");
+    }
+
+    @Test
+    void shouldRejectLoginWhenAccountDisabled() {
+        AuthRequest request = new AuthRequest();
+        request.setUsername("locked");
+        request.setPassword("password123");
+
+        User user = new User();
+        user.setUsername("locked");
+        user.setPasswordHash("hashedPassword");
+        user.setStatus("disabled");
+
+        when(userRepository.findByUsername("locked")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password123", "hashedPassword")).thenReturn(true);
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> authService.login(request));
+
+        assertEquals(403, ex.getCode());
+        verify(jwtTokenUtil, never()).generateToken(anyString());
+    }
+
+    @Test
+    void shouldRejectRegisterWhenPasswordViolatesPolicy() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("newuser");
+        request.setPassword("short");
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> authService.register(request));
+        assertEquals(400, ex.getCode());
+        verify(userRepository, never()).save(any(User.class));
     }
 }

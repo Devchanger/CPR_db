@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "students")
+@Table(name = "students", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "username")
+})
 public class Student {
 
     @Id
@@ -34,6 +36,10 @@ public class Student {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    /** D19: nullable mapping key to the User account (not an FK, not a hard binding). */
+    @Column(length = 50)
+    private String username;
 
     public Student() {
     }
@@ -118,5 +124,13 @@ public class Student {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

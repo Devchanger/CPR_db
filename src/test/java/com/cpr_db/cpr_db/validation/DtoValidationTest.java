@@ -2,6 +2,8 @@ package com.cpr_db.cpr_db.validation;
 
 import com.cpr_db.cpr_db.common.ApiResponse;
 import com.cpr_db.cpr_db.common.GlobalExceptionHandler;
+import com.cpr_db.cpr_db.dto.PasswordChangeRequest;
+import com.cpr_db.cpr_db.dto.RegisterRequest;
 import com.cpr_db.cpr_db.dto.ScoreSubmitRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -15,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.Set;
 
@@ -83,4 +87,59 @@ class DtoValidationTest {
         ResponseEntity<ApiResponse<Void>> resp = handler.handleValidationException(ex);
         assertEquals(400, resp.getStatusCode().value());
     }
+
+    @Test
+    @DisplayName("QA-B-01 unmapped routes map to 404 (deleted endpoints must not 500)")
+    void handler_unmappedRoute_returns404() {
+        NoHandlerFoundException ex = new NoHandlerFoundException("GET", "/api/v1/user/admins", null);
+
+        ResponseEntity<ApiResponse<Void>> resp = handler.handleNoHandlerFound(ex);
+
+        assertEquals(404, resp.getStatusCode().value());
+    }
+
+    @Test
+    @DisplayName("QA-B-01 path type mismatch maps to 400 (scenes/list must not 500)")
+    void handler_typeMismatch_returns400() {
+        MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException("list", Long.class, "list", null, null);
+
+        ResponseEntity<ApiResponse<Void>> resp = handler.handleTypeMismatch(ex);
+
+        assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
+    @DisplayName("BE-B-02 register password must satisfy D5 pattern")
+    void registerPassword_policy() {
+        RegisterRequest shortPwd = new RegisterRequest();
+        shortPwd.setUsername("u1");
+        shortPwd.setPassword("abc");
+        assertFalse(validator.validate(shortPwd).isEmpty(), "short password must fail D5");
+
+        RegisterRequest badChars = new RegisterRequest();
+        badChars.setUsername("u1");
+        badChars.setPassword("abcdef!");
+        assertFalse(validator.validate(badChars).isEmpty(), "password with special chars must fail D5");
+
+        RegisterRequest valid = new RegisterRequest();
+        valid.setUsername("u1");
+        valid.setPassword("abcdef12");
+        assertTrue(validator.validate(valid).isEmpty(), "valid alphanumeric password should pass: "
+                + validator.validate(valid));
+    }
+
+    @Test
+    @DisplayName("BE-B-02 change-password newPassword must satisfy D5 pattern")
+    void changePassword_policy() {
+        PasswordChangeRequest shortPwd = new PasswordChangeRequest();
+        shortPwd.setOldPassword("oldpass");
+        shortPwd.setNewPassword("12345");
+        assertFalse(validator.validate(shortPwd).isEmpty(), "short newPassword must fail D5");
+
+        PasswordChangeRequest valid = new PasswordChangeRequest();
+        valid.setOldPassword("oldpass");
+        valid.setNewPassword("abcdef12");
+        assertTrue(validator.validate(valid).isEmpty(), "valid newPassword should pass");
+    }
+
 }

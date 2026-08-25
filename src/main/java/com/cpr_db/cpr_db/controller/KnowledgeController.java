@@ -33,19 +33,19 @@ public class KnowledgeController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Knowledge>> create(@RequestBody Knowledge body) {
         return ResponseEntity.ok(ApiResponse.success(knowledgeService.createKnowledge(body), "created"));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Knowledge>> update(@PathVariable Long id, @RequestBody Knowledge body) {
         return ResponseEntity.ok(ApiResponse.success(knowledgeService.updateKnowledge(id, body), "updated"));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('admin') or hasAuthority('super_admin')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         knowledgeService.deleteKnowledge(id);
         return ResponseEntity.ok(ApiResponse.success(null, "deleted"));

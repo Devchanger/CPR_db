@@ -4,7 +4,7 @@
 
 > **生产地址**: http://123.57.30.132:8080  
 > **API 文档**: [API.md](./API.md)  
-> **种子账号**: `testuser` / `Test@123456`
+> **种子账号**: `testuser` / `CHANGE_ME`
 
 > 🟢 **质量门禁（2026-07-30）**：后端 12 个 P0 缺陷 + P1-6 已闭环，独立复跑 `mvn test` **48/48 全绿**（BUILD SUCCESS）。验证结论与逐项证据见 [BACKEND_P0_CLOSURE.md](./BACKEND_P0_CLOSURE.md)；契约更新见 [API.md](./API.md)。  
 > ⚠️ `REVIEW-REPORT.md` 为**修复前**的评审基线快照，不代表当前状态，请勿据此判断缺陷是否已修。
@@ -287,7 +287,7 @@ curl -s $BASE/api/v1/videos/video1 | python3 -m json.tool
 # 登录
 TOKEN=$(curl -s -X POST $BASE/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"testuser","password":"Test@123456"}' \
+  -d '{"username":"testuser","password":"CHANGE_ME"}' \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['token'])")
 
 echo "Token: ${TOKEN:0:30}..."
