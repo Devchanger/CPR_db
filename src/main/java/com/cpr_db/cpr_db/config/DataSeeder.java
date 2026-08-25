@@ -213,6 +213,9 @@ public class DataSeeder implements CommandLineRunner {
 
         // BE-B-01: converge any legacy super_admin rows to admin (idempotent).
         userRepository.convergeSuperAdminToAdmin();
+        // D-rollback: backfill any NULL-role accounts to 'student' so the authorization
+        // chain stays intact on old production data (e.g. test001~test006 with role=NULL).
+        userRepository.backfillNullRoles();
 
         // DM-B-01: existing student rows get a linked pinyin account (张三 -> zhangsan, 李四 -> lisi11), idempotent.
         studentRepository.findAll().forEach(studentService::ensureAccount);

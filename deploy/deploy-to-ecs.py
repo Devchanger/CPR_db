@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""CPR DB — 一键部署到 AgerEnd ECS (123.57.30.132)"""
+"""CPR DB — 一键部署到 AgerEnd ECS (123.57.30.132)
+
+安全约定：
+- 不在此脚本内启用 ufw（default-deny 会阻断未声明端口，违反 ECS 部署红线）。
+  防火墙请在脚本外按 ECS 规范手动放行 22/8080（3306 仅内网）。
+- .env / application.properties 中的密钥一律走环境变量，脚本不硬编码凭据。
+"""
 
 import paramiko, time, sys, os
 
@@ -51,8 +57,8 @@ def main():
     run(ssh,
         "export DEBIAN_FRONTEND=noninteractive && "
         "apt-get update -qq && "
-        "apt-get install -y -qq openjdk-17-jdk mysql-server maven ufw",
-        "安装 openjdk17 + mysql + maven + ufw")
+        "apt-get install -y -qq openjdk-17-jdk mysql-server maven",
+        "安装 openjdk17 + mysql + maven")
 
     # ── Step 2: MySQL 启动 ──
     run(ssh, "systemctl enable --now mysql", "启动 MySQL")
@@ -71,7 +77,13 @@ def main():
     # ── Step 6: SFTP 上传部署配置文件 ──
     print("\n>>> SFTP 上传配置文件 ...")
     sftp = ssh.open_sftp()
-    for fname in [".env", "application.properties", "init.sql", "cpr-db.service"]:
+    # .env：优先用本地真实 .env；不存在则回退到仓库内的 .env.sample 模板
+    env_local = os.path.join(DEPLOY_FILES, ".env")
+    if not os.path.exists(env_local):
+        env_local = os.path.join(DEPLOY_FILES, ".env.sample")
+    sftp.put(localpath=env_local, remotepath=f"{APP_DIR}/.env")
+    print(f"  ✓ .env (from {os.path.basename(env_local)})")
+    for fname in ["application.properties", "init.sql", "migration-2026-08-10.sql", "cpr-db.service"]:
         local = os.path.join(DEPLOY_FILES, fname)
         remote = f"{APP_DIR}/{fname}"
         sftp.put(localpath=local, remotepath=remote)
@@ -81,6 +93,9 @@ def main():
 
     # ── Step 7: 初始化数据库 ──
     run(ssh, f"mysql < {APP_DIR}/init.sql", "初始化 MySQL 数据库")
+
+    # ── Step 7b: 生产迁移 SQL（幂等，补齐 skills/steps/operation_logs/notifications 等表与列） ──
+    run(ssh, f"mysql cpr_db < {APP_DIR}/migration-2026-08-10.sql", "执行生产迁移 SQL")
 
     # ── Step 8: 创建用户 & 权限 ──
     run(ssh, "id cpr >/dev/null 2>&1 || useradd --system --no-create-home --shell /usr/sbin/nologin cpr",
@@ -93,9 +108,8 @@ def main():
     run(ssh, f"cp {APP_DIR}/cpr-db.service /etc/systemd/system/cpr-db.service && systemctl daemon-reload",
         "注册 systemd 服务")
 
-    # ── Step 10: 防火墙 ──
-    run(ssh, "ufw allow 22/tcp && ufw allow 8080/tcp && ufw --force enable || true",
-        "防火墙放行 22 & 8080")
+    # ── Step 10: 防火墙（按 ECS 规范不在脚本内启用 ufw，避免 default-deny 阻断未声明端口） ──
+    print("\n>>> [跳过] 防火墙：请按 ECS 规范在脚本外手动放行 22/8080（勿在部署脚本内启用 ufw）")
 
     # ── Step 11: 启动 ──
     time.sleep(2)

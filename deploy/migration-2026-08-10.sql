@@ -1,10 +1,10 @@
 -- ============================================================================
--- Life Guard CPR_db 生产迁移 SQL（2026-08-10）
--- 用途：补齐代码（HEAD 9c98a74）期望、但线上库缺失的表与列
---   skills / steps / operation_logs 三张新表 + videos / students 新列
+-- Life Guard CPR_db 生产迁移 SQL（2026-08-10，2026-08-25 补 notifications）
+-- 用途：补齐代码期望、但线上库缺失的表与列
+--   skills / steps / operation_logs / notifications 四张新表 + videos / students 新列
 -- 幂等设计：IF NOT EXISTS / 信息函数判断，可重复执行
 -- 新列策略：NOT NULL 列先可空/给默认 → 回填 → 再收紧（避免对已有行失败）
--- 依据实体：Skill.java / Step.java / Log.java / Video.java / Student.java
+-- 依据实体：Skill.java / Step.java / Log.java / Notification.java / Video.java / Student.java
 -- ============================================================================
 
 USE cpr_db;
@@ -57,6 +57,20 @@ CREATE TABLE IF NOT EXISTS operation_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
+-- 3b. notifications（Notification.java：id/title/content_md/status/created_at/updated_at/published_at）
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS notifications (
+    id           BIGINT       NOT NULL AUTO_INCREMENT,
+    title        VARCHAR(200) NOT NULL,
+    content_md   TEXT         NOT NULL,
+    status       VARCHAR(20)  NULL,
+    created_at   DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at   DATETIME(6)  NULL,
+    published_at DATETIME(6)  NULL,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
 -- 4. videos 补列（Video.java：title/skill_id/status/created_at）
 --    title: NOT NULL 但给默认 '' 以兼容旧行；status 默认 active；created_at 默认当前时间
 -- ----------------------------------------------------------------------------
@@ -102,5 +116,5 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 -- ----------------------------------------------------------------------------
 -- 6. 校验（部署后运行确认）
 -- ----------------------------------------------------------------------------
--- SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='cpr_db' AND TABLE_NAME IN ('skills','steps','operation_logs');
+-- SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='cpr_db' AND TABLE_NAME IN ('skills','steps','operation_logs','notifications');
 -- SHOW COLUMNS FROM videos; SHOW COLUMNS FROM students;

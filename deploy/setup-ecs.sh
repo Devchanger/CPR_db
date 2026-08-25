@@ -5,10 +5,10 @@ set -euo pipefail
 
 DEPLOY_DIR=/opt/cpr-db
 
-echo "[1/6] 安装依赖 (openjdk-17-jdk, mysql-server, ufw) ..."
+echo "[1/6] 安装依赖 (openjdk-17-jdk, mysql-server) ..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y openjdk-17-jdk mysql-server ufw
+apt-get install -y openjdk-17-jdk mysql-server
 
 echo "[2/6] 启动并启用 MySQL ..."
 systemctl enable --now mysql
@@ -30,10 +30,8 @@ cp "${DEPLOY_DIR}/cpr-db.service" /etc/systemd/system/cpr-db.service
 systemctl daemon-reload
 systemctl enable --now cpr-db
 
-echo "[6/6] 配置防火墙 (放行 22/8080，3306 仅内网) ..."
-ufw allow 22/tcp
-ufw allow 8080/tcp
-ufw --force enable || true
+echo "[6/6] 防火墙：按 ECS 规范不在此脚本内启用 ufw（default-deny 会阻断未声明端口）"
+echo "       请在脚本外手动放行 22/8080（3306 仅内网，无需对外）。"
 
 echo "=== 部署完成! 服务状态: ==="
 systemctl status cpr-db --no-pager || true

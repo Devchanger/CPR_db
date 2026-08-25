@@ -23,4 +23,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("update User u set u.role = 'admin' where u.role = 'super_admin'")
     int convergeSuperAdminToAdmin();
+
+    /**
+     * Backfill legacy NULL-role accounts to 'student' so the authorization chain
+     * stays intact on old production data (e.g. test001~test006 with role=NULL).
+     * Idempotent; runs on every boot alongside convergeSuperAdminToAdmin.
+     */
+    @Modifying
+    @Query("update User u set u.role = 'student' where u.role is null")
+    int backfillNullRoles();
 }

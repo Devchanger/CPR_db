@@ -25,7 +25,7 @@ target/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
+/build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
@@ -42,11 +42,25 @@ application.properties
 
 ### Project Docs ###
 conversation/
-<<<<<<< HEAD
-=======
 
 # ===== WorkBuddy / 工具产物 =====
 .workbuddy/
 logs/
 fix-report.md
->>>>>>> 193e2be (feat: complete all missing backend API endpoints)
+
+# ===== QA / 审查过程文档（非源码，不入库） =====
+API.md.bak
+API.md.fixed
+API.md.new
+FIX-CONCLUSION-AUDIT.md
+FIX-CONCLUSION.md
+FRONTEND-BACKEND-INTEGRATION-PLAN.md
+api-contract-audit-report.md
+backend-production-briefing.md
+backend-remote-db-briefing.md
+deploy-super-admin-convergence-2026-08-10.md
+execution-plan-grilled-2026-08-10.md
+new-session-handoff-prompt.md
+
+# ===== 允许提交的生产部署配置（无密钥，env 驱动） =====
+!deploy/application.properties
