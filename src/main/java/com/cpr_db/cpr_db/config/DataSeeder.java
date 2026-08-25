@@ -28,10 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 @Component
 @Order(1)
 public class DataSeeder implements CommandLineRunner {
@@ -243,53 +239,6 @@ public class DataSeeder implements CommandLineRunner {
             sb.append(PASSWORD_CHARS.charAt(RANDOM.nextInt(PASSWORD_CHARS.length())));
         }
         return sb.toString();
-    }
-
-    private Scene scene(String name, String desc, String type, String icon, int sortOrder) {
-        Scene s = new Scene();
-        s.setName(name);
-        s.setDescription(desc);
-        s.setType(type);
-        s.setIcon(icon);
-        s.setSortOrder(sortOrder);
-        return s;
-    }
-
-    private Knowledge k(String question, String answer, String category, String tags) {
-        Knowledge knowledge = new Knowledge();
-        knowledge.setQuestion(question);
-        knowledge.setAnswer(answer);
-        knowledge.setCategory(category);
-        knowledge.setTags(tags);
-        knowledgeRepository.save(knowledge);
-        return knowledge;
-    }
-
-    private Skill skill(String name, String desc, String icon, Long sceneId, int sortOrder) {
-        Skill s = new Skill();
-        s.setName(name);
-        s.setDescription(desc);
-        s.setIcon(icon);
-        s.setSceneId(sceneId);
-        s.setSortOrder(sortOrder);
-        return s;
-    }
-
-    private Step step(Long skillId, String title, String desc, int order) {
-        Step s = new Step();
-        s.setSkillId(skillId);
-        s.setTitle(title);
-        s.setDescription(desc);
-        s.setOrder(order);
-        return s;
-    }
-
-    private Student student(String name, String phone, String groupName) {
-        Student s = new Student();
-        s.setName(name);
-        s.setPhone(phone);
-        s.setGroupName(groupName);
-        return s;
     }
 
     private Scene scene(String name, String desc, String type, String icon, int sortOrder) {

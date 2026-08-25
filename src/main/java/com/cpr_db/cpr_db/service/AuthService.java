@@ -72,13 +72,4 @@ public class AuthService {
             // logging must not break the business flow
         }
     }
-
-    // Non-blocking audit log: never let logging failure break the auth flow.
-    private void logAuth(String action, Long targetId, String username, String detail) {
-        try {
-            logService.log(targetId, username, action, "auth", targetId, detail, SecurityUtil.currentIp());
-        } catch (Exception ignored) {
-            // logging must not break the business flow
-        }
-    }
 }
