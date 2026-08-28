@@ -127,7 +127,12 @@ public class StudentService {
     public Student ensureAccount(Student student) {
         String username = student.getUsername();
         if (username == null || username.isBlank()) {
-            username = resolveGeneratedUsername(PinyinUtil.pinyin(student.getName()));
+            // 若 canonical 拼音账号已存在（如 username 列出现前的老账号），直接挂接，
+            // 不走 resolveGeneratedUsername 的重名加尾缀逻辑，避免产出 zhangsan2 类重复账号。
+            String canonical = PinyinUtil.pinyin(student.getName());
+            username = userRepository.existsByUsername(canonical)
+                    ? canonical
+                    : resolveGeneratedUsername(canonical);
             student.setUsername(username);
         }
         if (!userRepository.existsByUsername(username)) {
