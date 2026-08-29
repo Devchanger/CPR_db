@@ -27,7 +27,8 @@ class ScoreStatsTest {
     void setUp() {
         scoreService = new ScoreService(scoreRepository, logService);
         // recent scores page must be stubbed to avoid NPE inside getStats
-        when(scoreRepository.findTop5ByUsernameOrderByCreatedAtDesc(anyString(), any(Pageable.class)))
+        // (lenient: all=true 用例走全表查询，不消费此 stub)
+        lenient().when(scoreRepository.findTop5ByUsernameOrderByCreatedAtDesc(anyString(), any(Pageable.class)))
                 .thenReturn(Page.empty());
     }
 
@@ -76,5 +77,46 @@ class ScoreStatsTest {
         assertEquals(0.0, stats.getAverageScore(), 0.001);
         assertEquals(0.0, stats.getHighestScore(), 0.001);
         assertEquals(0.0, stats.getLowestScore(), 0.001);
+    }
+
+    @Test
+    @DisplayName("all=true aggregates school-wide (admin), ignoring the username filter")
+    void getStats_allTrue_schoolWide() {
+        when(scoreRepository.count()).thenReturn(40L);
+        when(scoreRepository.averageTotalScore()).thenReturn(75.5);
+        when(scoreRepository.maxTotalScore()).thenReturn(100.0);
+        when(scoreRepository.minTotalScore()).thenReturn(42.0);
+        when(scoreRepository.countDistinctScene()).thenReturn(1L);
+        when(scoreRepository.countDistinctSkill()).thenReturn(1L);
+        when(scoreRepository.findAllByOrderByCreatedAtDesc(any(Pageable.class)))
+                .thenReturn(Page.empty());
+
+        ScoreStatsResponse stats = scoreService.getStats("admin", true);
+
+        assertEquals(40, stats.getTotalAttempts());
+        assertEquals(75.5, stats.getAverageScore(), 0.001);
+        assertEquals(100.0, stats.getHighestScore(), 0.001);
+        assertEquals(42.0, stats.getLowestScore(), 0.001);
+
+        // 全校口径不得触碰 per-user 查询
+        verify(scoreRepository, never()).countByUsername(anyString());
+        verify(scoreRepository, never()).averageTotalScoreByUsername(anyString());
+        verify(scoreRepository, never()).findTop5ByUsernameOrderByCreatedAtDesc(anyString(), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("all=false falls back to per-user stats even for admin")
+    void getStats_allFalse_perUser() {
+        when(scoreRepository.countByUsername("u1")).thenReturn(1L);
+        when(scoreRepository.averageTotalScoreByUsername("u1")).thenReturn(90.0);
+        when(scoreRepository.maxTotalScoreByUsername("u1")).thenReturn(90.0);
+        when(scoreRepository.minTotalScoreByUsername("u1")).thenReturn(90.0);
+        when(scoreRepository.countDistinctSceneByUsername("u1")).thenReturn(1L);
+        when(scoreRepository.countDistinctSkillByUsername("u1")).thenReturn(1L);
+
+        ScoreStatsResponse stats = scoreService.getStats("u1", false);
+
+        assertEquals(1, stats.getTotalAttempts());
+        verify(scoreRepository, never()).count();
     }
 }

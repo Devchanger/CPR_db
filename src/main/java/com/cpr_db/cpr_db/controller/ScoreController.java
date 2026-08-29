@@ -84,9 +84,12 @@ public class ScoreController {
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<ApiResponse<ScoreStatsResponse>> getStats(Authentication authentication) {
+    public ResponseEntity<ApiResponse<ScoreStatsResponse>> getStats(Authentication authentication,
+                                                                    @RequestParam(name = "all", defaultValue = "false") boolean all) {
         String username = authentication.getName();
-        ScoreStatsResponse stats = scoreService.getStats(username);
+        // all=true 仅 admin 生效；学生传 all 仍按本人统计（D4 归属校验）
+        boolean schoolWide = all && isAdmin(authentication);
+        ScoreStatsResponse stats = scoreService.getStats(username, schoolWide);
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
 

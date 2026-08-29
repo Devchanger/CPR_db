@@ -33,4 +33,20 @@ public interface ScoreRepository extends JpaRepository<Score, Long> {
 
     @Query("select count(distinct s.skill) from Score s where s.username = ?1")
     Long countDistinctSkillByUsername(String username);
+
+    // 全校（admin all=true）聚合：PRD 修订 #14/#16 —— admin 全校统计可见
+    @Query("select coalesce(avg(s.totalScore), 0.0) from Score s")
+    Double averageTotalScore();
+
+    @Query("select coalesce(max(s.totalScore), 0.0) from Score s")
+    Double maxTotalScore();
+
+    @Query("select coalesce(min(s.totalScore), 0.0) from Score s")
+    Double minTotalScore();
+
+    @Query("select count(distinct s.scene) from Score s")
+    Long countDistinctScene();
+
+    @Query("select count(distinct s.skill) from Score s")
+    Long countDistinctSkill();
 }

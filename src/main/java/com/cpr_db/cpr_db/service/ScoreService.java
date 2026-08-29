@@ -95,7 +95,31 @@ public class ScoreService {
     // DB-level aggregation instead of loading all rows into memory (review P1-6).
     @Transactional(readOnly = true)
     public ScoreStatsResponse getStats(String username) {
+        return getStats(username, false);
+    }
+
+    /**
+     * all=true 时统计全校（admin 视角），否则仅当前用户。
+     * 修复：/scores/stats 此前忽略 all 语义，admin 拿到恒空统计（recent_scores=[]）。
+     */
+    @Transactional(readOnly = true)
+    public ScoreStatsResponse getStats(String username, boolean all) {
         ScoreStatsResponse stats = new ScoreStatsResponse();
+        if (all) {
+            stats.setTotalAttempts((int) scoreRepository.count());
+            stats.setAverageScore(scoreRepository.averageTotalScore());
+            stats.setHighestScore(scoreRepository.maxTotalScore());
+            stats.setLowestScore(scoreRepository.minTotalScore());
+            Long scenes = scoreRepository.countDistinctScene();
+            Long skills = scoreRepository.countDistinctSkill();
+            stats.setScenesTrained(scenes == null ? 0 : scenes.intValue());
+            stats.setSkillsTrained(skills == null ? 0 : skills.intValue());
+            List<ScoreDto> recent = scoreRepository
+                    .findAllByOrderByCreatedAtDesc(PageRequest.of(0, 5))
+                    .getContent().stream().map(this::toDto).collect(Collectors.toList());
+            stats.setRecentScores(recent);
+            return stats;
+        }
         stats.setTotalAttempts((int) scoreRepository.countByUsername(username));
         stats.setAverageScore(scoreRepository.averageTotalScoreByUsername(username));
         stats.setHighestScore(scoreRepository.maxTotalScoreByUsername(username));
