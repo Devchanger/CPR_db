@@ -118,3 +118,11 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 -- ----------------------------------------------------------------------------
 -- SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='cpr_db' AND TABLE_NAME IN ('skills','steps','operation_logs','notifications');
 -- SHOW COLUMNS FROM videos; SHOW COLUMNS FROM students;
+
+-- ----------------------------------------------------------------------------
+-- 7. scores.step_details 列宽修正（2026-08-29）
+--    旧版实体（无 @Lob）建列 tinytext(255)，新实体为 @Lob/TEXT；
+--    Hibernate ddl-auto=update 不会收窄/放宽已有列，需显式修正。
+--    重复执行安全（MODIFY 幂等）。
+-- ----------------------------------------------------------------------------
+ALTER TABLE scores MODIFY step_details TEXT NULL;
