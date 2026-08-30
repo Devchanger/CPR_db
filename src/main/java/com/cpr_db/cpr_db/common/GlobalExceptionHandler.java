@@ -88,6 +88,15 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(404, "接口不存在: " + ex.getRequestURL()));
     }
 
+    // 未映射路由落到静态资源处理器时抛出此异常（Spring 6+），此前未被处理导致 500。
+    // 典型：BE-B-05 删除的端点（如 GET /user/admins）仍被前端调用。
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFound(
+            org.springframework.web.servlet.resource.NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.fail(404, "接口不存在: " + ex.getResourcePath()));
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
