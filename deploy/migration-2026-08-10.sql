@@ -126,3 +126,15 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 --    重复执行安全（MODIFY 幂等）。
 -- ----------------------------------------------------------------------------
 ALTER TABLE scores MODIFY step_details TEXT NULL;
+
+-- ----------------------------------------------------------------------------
+-- 8. videos.file_size 列（2026-08-30）
+--    前端文件大小展示依赖；新上传由服务层按落盘文件解析，历史行部署时回填。
+--    幂等：存在则跳过。
+-- ----------------------------------------------------------------------------
+SET @has_file_size := (SELECT COUNT(*) FROM information_schema.COLUMNS
+                    WHERE TABLE_SCHEMA='cpr_db' AND TABLE_NAME='videos' AND COLUMN_NAME='file_size');
+SET @sql := IF(@has_file_size = 0,
+    'ALTER TABLE videos ADD COLUMN file_size BIGINT NULL',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

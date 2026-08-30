@@ -7,12 +7,15 @@ import com.cpr_db.cpr_db.entity.Skill;
 import com.cpr_db.cpr_db.entity.Video;
 import com.cpr_db.cpr_db.repository.SkillRepository;
 import com.cpr_db.cpr_db.repository.VideoRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +32,10 @@ public class VideoService {
 
     private final VideoRepository videoRepository;
     private final SkillRepository skillRepository;
+
+    /** 上传根目录（cpr.upload.dir），用于把 /uploads/** 的 url 解析回本地文件取大小 */
+    @Value("${cpr.upload.dir:uploads}")
+    private String uploadDir;
 
     public VideoService(VideoRepository videoRepository, SkillRepository skillRepository) {
         this.videoRepository = videoRepository;
@@ -85,6 +92,7 @@ public class VideoService {
         Video video = new Video();
         video.setTitle(title);
         video.setUrl(url);
+        video.setFileSize(resolveFileSize(url));
         video.setSkillId(req.getSkillId());
         video.setDurationSeconds(req.getDurationSeconds());
         video.setStatus(req.getStatus() == null || req.getStatus().isBlank() ? "active" : validateStatus(req.getStatus()));
@@ -97,7 +105,10 @@ public class VideoService {
         Video video = videoRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "video not found"));
         if (req.getTitle() != null) video.setTitle(req.getTitle().trim());
-        if (req.getUrl() != null) video.setUrl(req.getUrl().trim());
+        if (req.getUrl() != null) {
+            video.setUrl(req.getUrl().trim());
+            video.setFileSize(resolveFileSize(req.getUrl().trim()));
+        }
         if (req.getSkillId() != null) {
             if (req.getSkillId() != 0 && !skillRepository.existsById(req.getSkillId())) {
                 throw new BusinessException(400, "skill not found");
@@ -128,9 +139,27 @@ public class VideoService {
         map.put("skill_id", video.getSkillId());
         map.put("skill_name", video.getSkillId() == null ? null : skillNameMap.get(video.getSkillId()));
         map.put("duration_seconds", video.getDurationSeconds());
+        map.put("file_size", video.getFileSize());
         map.put("status", video.getStatus());
         map.put("created_at", video.getCreatedAt());
         return map;
+    }
+
+    /**
+     * 按 url 解析落盘文件大小（字节）；url 兼容绝对地址（http://host/uploads/**）与相对路径（/uploads/**）。
+     * 文件不存在或解析失败返回 null（前端按缺失显示）。
+     */
+    private Long resolveFileSize(String url) {
+        if (url == null || url.isBlank()) return null;
+        int idx = url.indexOf("/uploads/");
+        if (idx < 0) return null;
+        String relative = url.substring(idx + "/uploads/".length());
+        try {
+            Path path = Path.of(uploadDir, relative);
+            return Files.exists(path) ? Files.size(path) : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Map<String, Object> toListMap(Page<Video> result) {

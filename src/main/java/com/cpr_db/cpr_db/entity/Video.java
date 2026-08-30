@@ -28,6 +28,10 @@ public class Video {
     @Column
     private Integer durationSeconds;
 
+    // 文件大小（字节）；历史数据回填于部署迁移，新上传由服务层按落盘文件解析
+    @Column(name = "file_size")
+    private Long fileSize;
+
     @Column(nullable = false, length = 200)
     private String title;
 
@@ -86,6 +90,14 @@ public class Video {
 
     public void setDurationSeconds(Integer durationSeconds) {
         this.durationSeconds = durationSeconds;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
     }
 
     public String getTitle() {

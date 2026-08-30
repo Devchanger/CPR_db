@@ -26,7 +26,7 @@ public class VideoController {
     @GetMapping("/{videoId}")
     public ResponseEntity<ApiResponse<VideoResponse>> getVideo(@PathVariable String videoId) {
         Video video = videoService.getVideoEntity(videoId);
-        VideoResponse response = new VideoResponse(video.getVideoId(), video.getUrl(), video.getDurationSeconds());
+        VideoResponse response = new VideoResponse(video.getVideoId(), video.getUrl(), video.getDurationSeconds(), video.getFileSize());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
